@@ -112,7 +112,8 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="password"],
-textarea {
+textarea,
+select {
     width: 100%;
     padding: 12px 16px 12px 45px;
     border: 1px solid var(--border-color);
@@ -125,7 +126,16 @@ textarea {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input:focus, textarea:focus {
+select {
+    padding: 12px 16px; /* Padding ajustado para select */
+    appearance: none; /* Remove a seta padrão */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a9b1d6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+input:focus, textarea:focus, select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.3);
@@ -445,6 +455,19 @@ button:disabled {
     color: var(--success-color);
 }
 
+.peca-info {
+    background-color: rgba(224, 175, 104, 0.1);
+    border-left: 3px solid var(--warning-color);
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.peca-info strong {
+    color: var(--warning-color);
+}
 .card-footer {
     display: flex;
     justify-content: space-between;
@@ -463,6 +486,30 @@ button:disabled {
     padding: 6px 12px;
 }
 
+/* Estilos para as tags de urgência */
+.urgency-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: var(--border-radius-sm);
+    margin-left: 10px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
+.urgencia-baixa {
+    background-color: rgba(122, 162, 247, 0.2); /* Azul */
+    color: #7aa2f7;
+}
+.urgencia-media {
+    background-color: rgba(224, 175, 104, 0.2); /* Amarelo */
+    color: #e0af68;
+}
+.urgencia-alta {
+    background-color: rgba(247, 118, 142, 0.2); /* Vermelho */
+    color: #f7768e;
+}
 /* Estilos para as novas categorias */
 .categoria-section {
     margin-bottom: 40px;

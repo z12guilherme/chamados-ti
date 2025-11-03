@@ -23,6 +23,8 @@ const selectStatus = document.getElementById('novoStatus');
 const btnStatusCancelar = document.getElementById('btnStatusCancelar');
 const campoResolucao = document.getElementById('campoResolucao');
 const textoResolucao = document.getElementById('textoResolucao');
+const campoPeca = document.getElementById('campoPeca');
+const textoPeca = document.getElementById('textoPeca');
 const btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
 
 let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou mudança de status
@@ -76,6 +78,17 @@ function carregarChamados() {
                    </div>`
                 : '';
 
+            const pecaHtml = chamado.status === 'Aguardando Peça' && chamado.pecaAguardando
+                ? `<div class="peca-info">
+                     <strong>Aguardando Peça:</strong> ${chamado.pecaAguardando}
+                   </div>`
+                : '';
+
+            const urgenciaClass = chamado.urgencia ? `urgencia-${chamado.urgencia.toLowerCase()}` : '';
+            const urgenciaHtml = chamado.urgencia 
+                ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
+                : '';
+
             const card = document.createElement('div');
             card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
             card.dataset.id = id;
@@ -84,7 +97,7 @@ function carregarChamados() {
             card.innerHTML = `
                 <div class="card-header">
                     <div class="solicitante-info">
-                        <span class="solicitante-nome">${chamado.nome}</span>
+                        <span class="solicitante-nome">${chamado.nome} ${urgenciaHtml}</span>
                         <span class="solicitante-setor">Setor: ${chamado.setor}</span>
                     </div>
                     <div class="status-container">
@@ -94,6 +107,7 @@ function carregarChamados() {
                 <div class="problema-resumo">
                     <p>${chamado.problema}</p>
                 </div>
+                ${pecaHtml}
                 ${resolucaoHtml}
                 <div class="card-footer">
                     <div class="data-abertura">
@@ -168,6 +182,8 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
         textoResolucao.value = chamadoAtualParaStatus.resolucao || '';
         campoResolucao.style.display = chamadoAtualParaStatus.status === 'Resolvido' ? 'block' : 'none';
+        textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
+        campoPeca.style.display = chamadoAtualParaStatus.status === 'Aguardando Peça' ? 'block' : 'none';
         validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
     }
@@ -191,14 +207,18 @@ btnModalConfirmar.addEventListener('click', async () => {
 btnStatusCancelar.addEventListener('click', () => {
     modalStatus.style.display = 'none';
     campoResolucao.style.display = 'none';
+    campoPeca.style.display = 'none';
     chamadoIdParaAcao = null;
     chamadoAtualParaStatus = null;
 });
 function validarFormStatus() {
     const statusSelecionado = selectStatus.value;
     const resolucaoTexto = textoResolucao.value.trim();
+    const pecaTexto = textoPeca.value.trim();
 
     if (statusSelecionado === 'Resolvido' && resolucaoTexto === '') {
+        btnSalvarStatus.disabled = true;
+    } else if (statusSelecionado === 'Aguardando Peça' && pecaTexto === '') {
         btnSalvarStatus.disabled = true;
     } else {
         btnSalvarStatus.disabled = false;
@@ -206,15 +226,23 @@ function validarFormStatus() {
 }
 
 selectStatus.addEventListener('change', () => {
-    if (selectStatus.value === 'Resolvido') {
+    const status = selectStatus.value;
+    if (status === 'Resolvido') {
         campoResolucao.style.display = 'block';
+        campoPeca.style.display = 'none';
+    } else if (status === 'Aguardando Peça') {
+        campoResolucao.style.display = 'none';
+        campoPeca.style.display = 'block';
     } else {
         campoResolucao.style.display = 'none';
+        campoPeca.style.display = 'none';
     }
     validarFormStatus();
 });
 
 textoResolucao.addEventListener('input', validarFormStatus);
+textoPeca.addEventListener('input', validarFormStatus);
+
 
 formStatus.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -231,6 +259,13 @@ formStatus.addEventListener('submit', async (e) => {
                 return;
             }
             dadosParaAtualizar.resolucao = textoResolucao.value.trim();
+        } else if (novoStatus === 'Aguardando Peça') {
+            if (textoPeca.value.trim() === '') {
+                alert('Por favor, informe qual peça está sendo aguardada.');
+                return;
+            }
+            dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
+            dadosParaAtualizar.resolucao = ''; // Limpa a resolução caso estivesse preenchida
         }
 
         await updateDoc(chamadoRef, dadosParaAtualizar);

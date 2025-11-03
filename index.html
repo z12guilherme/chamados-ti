@@ -44,6 +44,15 @@
             </div>
 
             <div class="form-group">
+                <label for="urgencia">Nível de Urgência:</label>
+                <select id="urgencia" required>
+                    <option value="Baixa" selected>Baixa - (Problemas que não impedem o trabalho)</option>
+                    <option value="Média">Média - (Afeta parcialmente o trabalho)</option>
+                    <option value="Alta">Alta - (Impede totalmente o trabalho)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label for="problema">Descreva o problema:</label>
                 <textarea id="problema" rows="5" required placeholder="Ex: Meu computador não liga e faz um barulho estranho."></textarea>
             </div>
