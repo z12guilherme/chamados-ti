@@ -8,25 +8,24 @@
 </head>
 <body>
     <div class="container">
-        <div class="header-container">
-            <div class="main-header">
-                <h2>Painel de Chamados T.I.</h2>
-                <div class="header-actions">
-                    <a href="index.html" class="btn-new-ticket">Abrir Chamado</a>
-                    <button id="btnLogout" class="btn-logout">Sair</button>
-                </div>
-            </div>
-            <div class="list-header">
-                <span class="header-item">Solicitante</span>
-                <span class="header-item">Problema</span>
-                <span class="header-item">Data de Abertura</span>
-                <span class="header-item">Status</span>
-                <span class="header-item">Ações</span>
-            </div>
+        <div class="chamado-header">
+            <h2>Painel de Chamados T.I.</h2>
+            <button id="btnLogout" class="btn-logout">Sair</button>
         </div>
 
-        <div id="listaChamados">
-            <!-- O loader será mostrado aqui enquanto os dados carregam -->
+        <div class="categorias-container">
+            <!-- Seção para chamados que precisam de atenção -->
+            <div class="categoria-section" id="chamados-ativos">
+                <h3>Chamados Ativos</h3>
+                <div id="listaPendentes"></div>
+                <div id="listaAguardandoPeca"></div>
+            </div>
+
+            <!-- Seção para chamados já resolvidos -->
+            <div class="categoria-section" id="chamados-resolvidos">
+                <h3>Histórico de Resolvidos</h3>
+                <div id="listaResolvidos"></div>
+            </div>
             <div class="loader"></div> 
         </div>
     </div>
@@ -51,11 +50,17 @@
                 <div class="form-group">
                     <label for="novoStatus">Novo Status:</label>
                     <select id="novoStatus" class="input-wrapper" style="width:100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 16px; color: var(--text-primary); background-color: var(--background-color);">
-                        <option value="Pendente">Pendente</option>
-                        <option value="Concluído">Concluído</option>
+                        <option value="Pendente" selected>Pendente</option>
+                        <option value="Em Andamento">Em Andamento</option>
                         <option value="Aguardando Peça">Aguardando Peça</option>
+                        <option value="Resolvido">Resolvido</option>
                     </select>
                 </div>
+                <div class="form-group" id="campoResolucao" style="display: none;">
+                    <label for="textoResolucao">Como o chamado foi resolvido?</label>
+                    <textarea id="textoResolucao" rows="4" placeholder="Ex: Foi realizada a limpeza dos arquivos temporários e a reinicialização do sistema."></textarea>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" id="btnStatusCancelar" class="btn-modal-cancel">Cancelar</button>
                     <button type="submit" class="btn-resolver" style="border: 1px solid var(--primary-color); color: var(--primary-color);">Salvar</button>

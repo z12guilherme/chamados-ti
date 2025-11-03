@@ -4,10 +4,14 @@ import { db, auth, dbFunctions, authFunctions } from './firebase-init.js';
 const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } = dbFunctions;
 const { onAuthStateChanged, signOut } = authFunctions;
 
-const listaChamadosEl = document.getElementById('listaChamados');
 const btnLogout = document.getElementById('btnLogout');
 
-// Elementos do Modal de Exclusão
+// Elementos das listas de chamados
+const loader = document.querySelector('.loader');
+const listaPendentesEl = document.getElementById('listaPendentes');
+const listaAguardandoPecaEl = document.getElementById('listaAguardandoPeca');
+const listaResolvidosEl = document.getElementById('listaResolvidos');
+
 const modalConfirmacao = document.getElementById('modalConfirmacao');
 const btnModalCancelar = document.getElementById('btnModalCancelar');
 const btnModalConfirmar = document.getElementById('btnModalConfirmar');
@@ -15,10 +19,14 @@ const btnModalConfirmar = document.getElementById('btnModalConfirmar');
 // Elementos do Modal de Status
 const modalStatus = document.getElementById('modalStatus');
 const formStatus = document.getElementById('formStatus');
-const selectNovoStatus = document.getElementById('novoStatus');
+const selectStatus = document.getElementById('novoStatus');
 const btnStatusCancelar = document.getElementById('btnStatusCancelar');
+const campoResolucao = document.getElementById('campoResolucao');
+const textoResolucao = document.getElementById('textoResolucao');
+const btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
 
 let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou mudança de status
+let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
 
 // Proteção de Rota e Carregamento de Dados
 onAuthStateChanged(auth, (user) => {
@@ -35,51 +43,100 @@ onAuthStateChanged(auth, (user) => {
 function carregarChamados() {
     const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
 
-    onSnapshot(q, (querySnapshot) => {
-        if (querySnapshot.empty) {
-            listaChamadosEl.innerHTML = `<div class="empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
-                <h3>Nenhum chamado aberto.</h3>
-                <p>Quando um novo chamado for criado, ele aparecerá aqui.</p>
-            </div>`;
-            return;
-        }
+    onSnapshot(q, (querySnapshot) => {        
+        loader.style.display = 'none';
 
-        listaChamadosEl.innerHTML = ''; // Limpa a lista antes de adicionar os novos
+        // Limpa as listas antes de recarregar
+        listaPendentesEl.innerHTML = '';
+        listaAguardandoPecaEl.innerHTML = '';
+        listaResolvidosEl.innerHTML = '';
+
+        const chamados = {
+            pendentes: [],
+            aguardandoPeca: [],
+            resolvidos: []
+        };
+
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
 
-            // Formata a data para um formato legível
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
-            
-            const statusClass = chamado.status.toLowerCase().replace(' ', '-');
+            const status = chamado.status || 'Pendente';
+            const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+
+            // Adiciona a validação para o campo de resolução ser obrigatório
+            if (status === 'Resolvido' && !chamado.resolucao) {
+                chamado.resolucao = "Resolução não informada.";
+            }
+
+            const resolucaoHtml = chamado.status === 'Resolvido' && chamado.resolucao
+                ? `<div class="resolucao-info">
+                     <strong>Solução:</strong> ${chamado.resolucao}
+                   </div>`
+                : '';
 
             const card = document.createElement('div');
-            card.className = `chamado-card ${statusClass.replace('í', 'i')}`;
+            card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
+            card.dataset.id = id;
+            card.dataset.chamado = JSON.stringify(chamado);
+            
             card.innerHTML = `
-                <div class="card-item solicitante-info">
-                    <span class="solicitante-nome">${chamado.nome}</span>
-                    <span class="solicitante-setor">${chamado.setor}</span>
+                <div class="card-header">
+                    <div class="solicitante-info">
+                        <span class="solicitante-nome">${chamado.nome}</span>
+                        <span class="solicitante-setor">Setor: ${chamado.setor}</span>
+                    </div>
+                    <div class="status-container">
+                        <span class="status-tag">${chamado.status}</span>
+                    </div>
                 </div>
-                <div class="card-item problema-resumo">
+                <div class="problema-resumo">
                     <p>${chamado.problema}</p>
                 </div>
-                <div class="card-item data-abertura">
-                    <span>${dataAbertura}</span>
-                </div>
-                <div class="card-item status-container">
-                    <span class="status-tag">${chamado.status}</span>
-                </div>
-                <div class="card-item acoes-container">
+                ${resolucaoHtml}
+                <div class="card-footer">
+                    <div class="data-abertura">
+                        Aberto em: ${dataAbertura}
+                    </div>
                     <button class="btn-status" data-id="${id}">Alterar</button>
                     <button class="btn-remover" data-id="${id}">Remover</button>
                 </div>
             `;
-            listaChamadosEl.appendChild(card);
+
+            // Separa os chamados por categoria
+            if (status === 'Pendente') {
+                chamados.pendentes.push(card);
+            } else if (status === 'Aguardando Peça') {
+                chamados.aguardandoPeca.push(card);
+            } else if (status === 'Resolvido' || status === 'Em Andamento') {
+                // Agrupando "Em Andamento" com "Resolvidos" para o histórico ou pode criar outra categoria
+                if (status === 'Resolvido') {
+                    chamados.resolvidos.push(card);
+                } else { // Em Andamento vai para a lista de pendentes para manter visibilidade
+                    chamados.pendentes.push(card);
+                }
+            }
         });
+
+        // Exibe os chamados ou a mensagem de "nenhum chamado"
+        if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0) {
+            document.getElementById('chamados-ativos').innerHTML += `<p class="empty-category-message">Nenhum chamado pendente.</p>`;
+        } else {
+            chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
+            chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
+        }
+
+        if (chamados.resolvidos.length === 0) {
+            listaResolvidosEl.innerHTML = `<p class="empty-category-message">Nenhum chamado foi resolvido ainda.</p>`;
+        } else {
+            chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
+        }
     });
 }
+
+
+
 
 // Event Listeners para Ações
 
@@ -94,14 +151,24 @@ btnLogout.addEventListener('click', async () => {
 });
 
 // Delegação de eventos para os botões de ação nos cards
-listaChamadosEl.addEventListener('click', (e) => {
-    chamadoIdParaAcao = e.target.dataset.id;
-    if (!chamadoIdParaAcao) return;
+document.querySelector('.categorias-container').addEventListener('click', (e) => {
+    const target = e.target;
+    if (!target.dataset.id) return;
 
-    if (e.target.classList.contains('btn-remover')) {
+    chamadoIdParaAcao = target.dataset.id;
+
+    if (target.classList.contains('btn-remover')) {
         modalConfirmacao.style.display = 'flex';
     }
-    if (e.target.classList.contains('btn-status')) {
+
+    if (target.classList.contains('btn-status')) {
+        const card = target.closest('.chamado-card');
+        chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
+        
+        selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
+        textoResolucao.value = chamadoAtualParaStatus.resolucao || '';
+        campoResolucao.style.display = chamadoAtualParaStatus.status === 'Resolvido' ? 'block' : 'none';
+        validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
     }
 });
@@ -123,17 +190,50 @@ btnModalConfirmar.addEventListener('click', async () => {
 // Ações do Modal de Status
 btnStatusCancelar.addEventListener('click', () => {
     modalStatus.style.display = 'none';
+    campoResolucao.style.display = 'none';
     chamadoIdParaAcao = null;
+    chamadoAtualParaStatus = null;
 });
+function validarFormStatus() {
+    const statusSelecionado = selectStatus.value;
+    const resolucaoTexto = textoResolucao.value.trim();
+
+    if (statusSelecionado === 'Resolvido' && resolucaoTexto === '') {
+        btnSalvarStatus.disabled = true;
+    } else {
+        btnSalvarStatus.disabled = false;
+    }
+}
+
+selectStatus.addEventListener('change', () => {
+    if (selectStatus.value === 'Resolvido') {
+        campoResolucao.style.display = 'block';
+    } else {
+        campoResolucao.style.display = 'none';
+    }
+    validarFormStatus();
+});
+
+textoResolucao.addEventListener('input', validarFormStatus);
 
 formStatus.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (chamadoIdParaAcao) {
-        const novoStatus = selectNovoStatus.value;
+        const novoStatus = selectStatus.value;
         const chamadoRef = doc(db, "chamados", chamadoIdParaAcao);
-        await updateDoc(chamadoRef, {
+        const dadosParaAtualizar = {
             status: novoStatus
-        });
+        };
+
+        if (novoStatus === 'Resolvido') {
+            if (textoResolucao.value.trim() === '') {
+                alert('Por favor, descreva como o problema foi resolvido.');
+                return;
+            }
+            dadosParaAtualizar.resolucao = textoResolucao.value.trim();
+        }
+
+        await updateDoc(chamadoRef, dadosParaAtualizar);
         modalStatus.style.display = 'none';
         chamadoIdParaAcao = null;
     }
