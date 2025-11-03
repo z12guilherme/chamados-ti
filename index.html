@@ -45,11 +45,20 @@
 
             <div class="form-group">
                 <label for="urgencia">Nível de Urgência:</label>
-                <select id="urgencia" required>
-                    <option value="Baixa" selected>Baixa - (Problemas que não impedem o trabalho)</option>
-                    <option value="Média">Média - (Afeta parcialmente o trabalho)</option>
-                    <option value="Alta">Alta - (Impede totalmente o trabalho)</option>
-                </select>
+                <div class="urgency-options-container" id="urgencia">
+                    <label class="urgency-option urgencia-baixa">
+                        <input type="radio" name="urgencia" value="Baixa" checked>
+                        <span>Baixa</span>
+                    </label>
+                    <label class="urgency-option urgencia-media">
+                        <input type="radio" name="urgencia" value="Média">
+                        <span>Média</span>
+                    </label>
+                    <label class="urgency-option urgencia-alta">
+                        <input type="radio" name="urgencia" value="Alta">
+                        <span>Alta</span>
+                    </label>
+                </div>
             </div>
 
             <div class="form-group">

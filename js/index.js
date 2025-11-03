@@ -15,7 +15,7 @@ form.addEventListener('submit', async (e) => {
     const nome = document.getElementById('nome').value;
     const setor = document.getElementById('setor').value;
     const problema = document.getElementById('problema').value;
-    const urgencia = document.getElementById('urgencia').value;
+    const urgencia = document.querySelector('input[name="urgencia"]:checked').value;
     
     try {
         // Salva o novo chamado diretamente no banco de dados Firestore

@@ -510,6 +510,41 @@ button:disabled {
     background-color: rgba(247, 118, 142, 0.2); /* Vermelho */
     color: #f7768e;
 }
+
+/* Estilos para os botões de seleção de urgência no formulário */
+.urgency-options-container {
+    display: flex;
+    gap: 10px;
+}
+
+.urgency-option {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    opacity: 0.6;
+}
+
+.urgency-option:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.urgency-option input[type="radio"] {
+    display: none; /* Esconde o botão de rádio original */
+}
+
+.urgency-option input[type="radio"]:checked + span {
+    font-weight: 700;
+}
+
+.urgency-option input[type="radio"]:checked {
+    opacity: 1;
+}
+
 /* Estilos para as novas categorias */
 .categoria-section {
     margin-bottom: 40px;
