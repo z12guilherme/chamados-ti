@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Chamados</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="chamado-header">
+            <h2>Painel de Chamados T.I.</h2>
+            <button id="btnLogout" class="btn-logout">Sair</button>
+        </div>
+
+        <div id="listaChamados">
+            <!-- O loader será mostrado aqui enquanto os dados carregam -->
+            <div class="loader"></div> 
+        </div>
+    </div>
+
+    <!-- Modal para confirmação de exclusão -->
+    <div id="modalConfirmacao" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>Confirmar Exclusão</h3>
+            <p>Você tem certeza de que deseja remover este chamado permanentemente? Esta ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button id="btnModalCancelar" class="btn-modal-cancel">Cancelar</button>
+                <button id="btnModalConfirmar" class="btn-remover">Confirmar Exclusão</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para alterar status -->
+    <div id="modalStatus" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="modalStatusTitulo">Alterar Status do Chamado</h3>
+            <form id="formStatus">
+                <div class="form-group">
+                    <label for="novoStatus">Novo Status:</label>
+                    <select id="novoStatus" class="input-wrapper" style="width:100%; padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); font-size: 16px; color: var(--text-primary); background-color: var(--background-color);">
+                        <option value="Pendente">Pendente</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Aguardando Peça">Aguardando Peça</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="btnStatusCancelar" class="btn-modal-cancel">Cancelar</button>
+                    <button type="submit" class="btn-resolver" style="border: 1px solid var(--primary-color); color: var(--primary-color);">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="js/painel.js"></script>
+</body>
+</html>

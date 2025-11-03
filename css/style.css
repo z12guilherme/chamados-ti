@@ -1,0 +1,484 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Paleta de Cores (Tokyo Night) */
+    --primary-color: #7aa2f7;
+    --success-color: #9ece6a;
+    --danger-color: #f7768e;
+    --warning-color: #e0af68;
+    --background-color: #1a1b26;
+    --surface-color: #24283b;
+    --surface-hover: #2f344d;
+    --text-primary: #c0caf5;
+    --text-secondary: #a9b1d6;
+    --border-color: #414868;
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--background-color);
+    color: var(--text-primary);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    background-color: var(--surface-color);
+    padding: 40px;
+    margin: 40px 20px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 0.5s ease-out;
+}
+
+h1, h2 {
+    color: var(--primary-color);
+    padding-bottom: 8px;
+    margin-top: 0;
+    font-weight: 700;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-header {
+    text-align: left;
+    margin-bottom: 30px;
+}
+
+.form-logo {
+    width: 350px;
+    height: 350px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    border-radius: 50%;
+}
+
+.form-header h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    border-bottom: none;
+}
+
+.form-header p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+    transition: color 0.2s ease;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 12px 16px 12px 45px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-sizing: border-box;
+    font-size: 16px;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(122, 162, 247, 0.3);
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: var(--primary-color);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 140px;
+    padding-left: 16px;
+}
+
+button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 14px 20px;
+    width: 100%;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: transparent;
+    color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background-color: #a0c7f1;
+    cursor: not-allowed;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.btn-logout {
+    background: none;
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    float: right;
+    width: auto;
+    padding: 10px 18px;
+    font-size: 0.95rem;
+}
+.btn-logout:hover, .btn-remover:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-resolver {
+    background: none;
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+.btn-resolver:hover {
+    background-color: var(--success-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.btn-aguardar {
+    background: none;
+    border: 1px solid var(--warning-color);
+    color: var(--warning-color);
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+.btn-aguardar:hover, .btn-modal-cancel:hover {
+    background-color: var(--warning-color);
+    color: var(--text-primary);
+}
+
+.btn-remover {
+    background: none;
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+
+.message {
+    padding: 18px;
+    margin: 25px 0 0;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid transparent;
+    font-size: 1.05rem;
+}
+.message.success {
+    background-color: rgba(158, 206, 106, 0.15);
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+.message.error {
+    background-color: rgba(247, 118, 142, 0.15);
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.chamado-card {
+    border: none;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: var(--border-radius-lg);
+    background-color: var(--surface-color);
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 5px solid var(--border-color);
+}
+
+.chamado-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    background-color: var(--surface-hover);
+}
+
+.chamado-card.pendente {
+    border-left: 5px solid var(--primary-color);
+}
+
+.chamado-card.resolvido, .chamado-card.concluído {
+    border-left: 5px solid var(--success-color);
+    opacity: 0.7;
+}
+.chamado-card.aguardando-peça {
+    border-left: 5px solid var(--warning-color);
+}
+
+.chamado-card p {
+    margin: 4px 0;
+    line-height: 1.6;
+}
+.chamado-card strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.footer {
+    width: 100%;
+    margin-top: auto; /* Empurra o rodapé para o final do espaço disponível */
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #787c99;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.footer a:hover {
+    color: var(--text-primary);
+}
+
+/* Animação de Loading (adaptada para tema escuro) */
+.loader {
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estilos do Painel */
+.chamado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chamado-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.chamado-footer button {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    width: auto;    
+}
+
+.btn-status {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+.btn-status:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.chamado-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.chamado-info {
+    margin-bottom: 15px;
+}
+
+.problema-descricao {
+    background-color: var(--background-color);
+    padding: 18px;
+    border-radius: var(--border-radius-md);
+    margin-top: 20px;
+    line-height: 1.6;
+    border: 1px solid var(--border-color);
+}
+
+.status-tag {
+    padding: 4px 10px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+    font-size: 1rem;
+}
+
+.empty-state svg {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    width: 60px;
+    height: 60px;
+}
+
+/* Estilos do Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--surface-color);
+    padding: 30px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.modal-content textarea {
+    min-height: 100px;
+    padding: 12px; /* Reset padding for modal textarea */
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions button {
+    width: auto;
+}
+
+.btn-modal-cancel {
+    background: none;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-secondary);
+}
+.btn-modal-cancel:hover {
+    background-color: var(--text-secondary);
+    color: var(--surface-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .container {
+        padding: 25px;
+        margin: 20px 10px;
+    }
+    .form-header h1 {
+        font-size: 1.8rem;
+    }
+    .form-header p {
+        font-size: 1rem;
+    }
+    button {
+        font-size: 1rem;
+        padding: 12px 15px;
+    }
+    .btn-logout {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    .chamado-card {
+        padding: 18px;
+    }
+    .chamado-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .footer {
+        padding: 10px 10px;
+        font-size: 0.8em;
+    }
+    .modal-actions {
+        flex-direction: column;
+    }
+}
