@@ -97,10 +97,11 @@ function carregarChamados() {
             card.innerHTML = `
                 <div class="card-header">
                     <div class="solicitante-info">
-                        <span class="solicitante-nome">${chamado.nome} ${urgenciaHtml}</span>
+                        <span class="solicitante-nome">${chamado.nome}</span>
                         <span class="solicitante-setor">Setor: ${chamado.setor}</span>
                     </div>
-                    <div class="status-container">
+                    <div class="status-container" style="display: flex; align-items: center; gap: 10px;">
+                        ${urgenciaHtml}
                         <span class="status-tag">${chamado.status}</span>
                     </div>
                 </div>
