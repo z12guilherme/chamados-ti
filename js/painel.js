@@ -56,21 +56,23 @@ function carregarChamados() {
             const statusClass = chamado.status.toLowerCase().replace(' ', '-');
 
             const card = document.createElement('div');
-            card.className = `chamado-card ${statusClass.replace('í', 'i')}`; // Remove acento para classe CSS
+            card.className = `chamado-card ${statusClass.replace('í', 'i')}`;
             card.innerHTML = `
-                <div class="chamado-header">
-                    <span class="status-tag">${chamado.status}</span>
-                    <span class="chamado-meta">Aberto em: <strong>${dataAbertura}</strong></span>
+                <div class="card-item solicitante-info">
+                    <span class="solicitante-nome">${chamado.nome}</span>
+                    <span class="solicitante-setor">${chamado.setor}</span>
                 </div>
-                <div class="chamado-info">
-                    <p><strong>Solicitante:</strong> ${chamado.nome} (${chamado.setor})</p>
-                </div>
-                <div class="problema-descricao">
-                    <strong>Problema:</strong>
+                <div class="card-item problema-resumo">
                     <p>${chamado.problema}</p>
                 </div>
-                <div class="chamado-footer">
-                    <button class="btn-status" data-id="${id}">Alterar Status</button>
+                <div class="card-item data-abertura">
+                    <span>${dataAbertura}</span>
+                </div>
+                <div class="card-item status-container">
+                    <span class="status-tag">${chamado.status}</span>
+                </div>
+                <div class="card-item acoes-container">
+                    <button class="btn-status" data-id="${id}">Alterar</button>
                     <button class="btn-remover" data-id="${id}">Remover</button>
                 </div>
             `;
