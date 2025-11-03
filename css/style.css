@@ -67,6 +67,7 @@ h1, h2 {
     height: 150px;
     object-fit: contain;
     margin: 0 auto 25px; /* Centralizado */
+    display: block;
     border-radius: 50%;
 }
 
