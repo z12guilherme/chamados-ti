@@ -2,7 +2,7 @@
 
 Um sistema web simples e moderno para abertura e gerenciamento de chamados de suporte técnico, utilizando Firebase como backend.
 
-![Demonstração do Painel](https://i.imgur.com/example.png) <!-- Você pode substituir por um screenshot real do seu painel -->
+![Print da aplicação](https://github.com/z12guilherme/chamados-ti/raw/main/print.PNG)
 
 ## ✨ Funcionalidades
 
