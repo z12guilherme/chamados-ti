@@ -138,8 +138,18 @@ function carregarChamados() {
         if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0 && chamados.emAndamento.length === 0) {
             document.getElementById('chamados-ativos').innerHTML += `<p class="empty-category-message">Nenhum chamado pendente.</p>`;
         } else {
-            chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
-            chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
+            if (chamados.pendentes.length > 0) {
+                listaPendentesEl.innerHTML += '<h4>Pendentes</h4>';
+                chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
+            }
+            if (chamados.emAndamento.length > 0) {
+                listaEmAndamentoEl.innerHTML += '<h4>Em Andamento</h4>';
+                chamados.emAndamento.forEach(card => listaEmAndamentoEl.appendChild(card));
+            }
+            if (chamados.aguardandoPeca.length > 0) {
+                listaAguardandoPecaEl.innerHTML += '<h4>Aguardando Peça</h4>';
+                chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
+            }
         }
 
         if (chamados.resolvidos.length === 0) {
@@ -148,6 +158,7 @@ function carregarChamados() {
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
     });
+}
 
 
 // Event Listeners para Ações
