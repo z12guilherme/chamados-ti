@@ -264,6 +264,10 @@ button:disabled {
     border-left: 5px solid var(--primary-color);
 }
 
+.chamado-card.em-andamento {
+    border-left: 5px solid #bb9af7; /* Cor roxa para "Em Andamento" */
+}
+
 .chamado-card.resolvido {
     border-left: 5px solid var(--success-color);
 }

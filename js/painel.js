@@ -9,6 +9,7 @@ const btnLogout = document.getElementById('btnLogout');
 // Elementos das listas de chamados
 const loader = document.querySelector('.loader');
 const listaPendentesEl = document.getElementById('listaPendentes');
+const listaEmAndamentoEl = document.getElementById('listaEmAndamento');
 const listaAguardandoPecaEl = document.getElementById('listaAguardandoPeca');
 const listaResolvidosEl = document.getElementById('listaResolvidos');
 
@@ -50,12 +51,14 @@ function carregarChamados() {
 
         // Limpa as listas antes de recarregar
         listaPendentesEl.innerHTML = '';
+        listaEmAndamentoEl.innerHTML = '';
         listaAguardandoPecaEl.innerHTML = '';
         listaResolvidosEl.innerHTML = '';
 
         const chamados = {
             pendentes: [],
             aguardandoPeca: [],
+            emAndamento: [],
             resolvidos: []
         };
 
@@ -122,20 +125,17 @@ function carregarChamados() {
             // Separa os chamados por categoria
             if (status === 'Pendente') {
                 chamados.pendentes.push(card);
+            } else if (status === 'Em Andamento') {
+                chamados.emAndamento.push(card);
             } else if (status === 'Aguardando Peça') {
                 chamados.aguardandoPeca.push(card);
-            } else if (status === 'Resolvido' || status === 'Em Andamento') {
-                // Agrupando "Em Andamento" com "Resolvidos" para o histórico ou pode criar outra categoria
-                if (status === 'Resolvido') {
-                    chamados.resolvidos.push(card);
-                } else { // Em Andamento vai para a lista de pendentes para manter visibilidade
-                    chamados.pendentes.push(card);
-                }
+            } else if (status === 'Resolvido') {
+                chamados.resolvidos.push(card);
             }
         });
 
         // Exibe os chamados ou a mensagem de "nenhum chamado"
-        if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0) {
+        if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0 && chamados.emAndamento.length === 0) {
             document.getElementById('chamados-ativos').innerHTML += `<p class="empty-category-message">Nenhum chamado pendente.</p>`;
         } else {
             chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
@@ -148,9 +148,6 @@ function carregarChamados() {
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
     });
-}
-
-
 
 
 // Event Listeners para Ações
