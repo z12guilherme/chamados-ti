@@ -10,7 +10,10 @@
     <div class="container">
         <div class="chamado-header">
             <h2>Painel de Chamados T.I</h2>
-            <button id="btnLogout" class="btn-logout">Sair</button>
+            <div class="header-actions">
+                <button id="btnExportarExcel" class="btn-export">Exportar Relatório</button>
+                <button id="btnLogout" class="btn-logout">Sair</button>
+            </div>
         </div>
 
         <div class="categorias-container">
@@ -74,6 +77,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script type="module" src="js/painel.js"></script>
 </body>
 </html>

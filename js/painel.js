@@ -5,6 +5,7 @@ const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } = db
 const { onAuthStateChanged, signOut } = authFunctions;
 
 const btnLogout = document.getElementById('btnLogout');
+const btnExportarExcel = document.getElementById('btnExportarExcel');
 
 // Elementos das listas de chamados
 const loader = document.querySelector('.loader');
@@ -30,6 +31,7 @@ const btnSalvarStatus = document.querySelector('#formStatus button[type="submit"
 
 let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou mudança de status
 let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
+let todosOsChamados = []; // Armazena todos os chamados para a exportação
 
 // Proteção de Rota e Carregamento de Dados
 onAuthStateChanged(auth, (user) => {
@@ -65,6 +67,7 @@ function carregarChamados() {
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
+            todosOsChamados.push({ id, ...chamado }); // Adiciona o chamado à lista de exportação
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
             const status = chamado.status || 'Pendente';
@@ -171,6 +174,41 @@ btnLogout.addEventListener('click', async () => {
     } catch (error) {
         console.error("Erro ao fazer logout:", error);
     }
+});
+
+// Exportar para Excel
+btnExportarExcel.addEventListener('click', () => {
+    if (todosOsChamados.length === 0) {
+        alert('Não há chamados para exportar.');
+        return;
+    }
+
+    // Formata os dados para a planilha
+    const dadosParaExportar = todosOsChamados.map(chamado => {
+        return {
+            'Data de Abertura': chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'N/A',
+            'Solicitante': chamado.nome,
+            'Setor': chamado.setor,
+            'Problema': chamado.problema,
+            'Urgência': chamado.urgencia,
+            'Status': chamado.status,
+            'Peça Aguardando': chamado.pecaAguardando || '',
+            'Resolução': chamado.resolucao || ''
+        };
+    });
+
+    // Cria a planilha a partir do array de objetos
+    const worksheet = XLSX.utils.json_to_sheet(dadosParaExportar);
+
+    // Cria um novo workbook
+    const workbook = XLSX.utils.book_new();
+
+    // Adiciona a planilha ao workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Chamados');
+
+    // Gera o arquivo .xlsx e dispara o download
+    const nomeArquivo = `Relatorio_Chamados_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, nomeArquivo);
 });
 
 // Delegação de eventos para os botões de ação nos cards
