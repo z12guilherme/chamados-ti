@@ -63,8 +63,8 @@ h1, h2 {
 }
 
 .form-logo {
-    width: 150px; /* Tamanho reduzido */
-    height: 150px;
+    width: 200px; /* Tamanho aumentado */
+    height: 200px;
     object-fit: contain;
     margin: 0 auto 25px; /* Centralizado */
     display: block;
