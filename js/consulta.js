@@ -6,6 +6,20 @@ const { collection, query, where, getDocs } = dbFunctions;
 const formConsulta = document.getElementById('formConsulta');
 const btnConsultar = document.getElementById('btnConsultar');
 const resultadoEl = document.getElementById('resultadoConsulta');
+const protocoloInputEl = document.getElementById('protocolo');
+
+// --- MELHORIA: Preenchimento automático via URL ---
+// Roda quando a página carrega para verificar se um protocolo foi passado na URL
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const protocoloFromUrl = params.get('protocolo');
+
+    if (protocoloFromUrl) {
+        protocoloInputEl.value = protocoloFromUrl; // Preenche o campo
+        formConsulta.requestSubmit(); // Envia o formulário automaticamente
+    }
+});
+// ----------------------------------------------------
 
 formConsulta.addEventListener('submit', async (e) => {
     e.preventDefault();
