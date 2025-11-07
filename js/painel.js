@@ -145,7 +145,7 @@ function carregarChamados() {
             card.innerHTML = `
                 <div class="card-header">
                     <div class="solicitante-info">
-                        <span class="protocolo-info">#${chamado.protocolo || id.substring(0, 6)}</span>
+                        <span class="protocolo-info">${chamado.protocolo ? `#${chamado.protocolo}` : 'S/P'}</span>
                         <span class="solicitante-nome">${chamado.nome}</span>
                         <span class="solicitante-setor">Setor: ${chamado.setor}</span>
                     </div>
