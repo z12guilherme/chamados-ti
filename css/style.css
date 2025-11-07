@@ -569,6 +569,37 @@ button:disabled {
     padding: 20px;
 }
 
+/* Estilos para o novo dashboard de gráficos */
+.dashboard-container {
+    background-color: var(--background-color);
+    padding: 25px;
+    margin-bottom: 30px;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.dashboard-container h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.graficos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.grafico-wrapper {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow);
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .container {

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Chamado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-header" style="text-align: center;">
+            <h1>🔎 Consultar Chamado</h1>
+            <p>Digite o protocolo do seu chamado para ver o status.</p>
+        </div>
+        
+        <form id="formConsulta">
+            <div class="form-group">
+                <label for="protocolo">Número do Protocolo:</label>
+                <div class="input-wrapper">
+                    <input type="text" id="protocolo" required placeholder="Ex: CH-2025-ABCD">
+                </div>
+            </div>
+            <button type="submit" id="btnConsultar">Consultar</button>
+        </form>
+
+        <div id="resultadoConsulta" style="display: none; margin-top: 2rem;">
+            <!-- O status do chamado será exibido aqui -->
+        </div>
+        <div id="mensagem" class="message" style="display: none;"></div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2025 Rede DMI | <a href="index.html">Abrir um novo chamado</a></p>
+    </div>
+
+    <script type="module" src="js/consulta.js"></script>
+</body>
+</html>

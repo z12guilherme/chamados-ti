@@ -33,6 +33,10 @@ let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou muda
 let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
 let todosOsChamados = []; // Armazena todos os chamados para a exportação
 
+// --- MELHORIA: Gráficos ---
+let graficoStatusInstance = null;
+let graficoSetoresInstance = null;
+
 // --- MELHORIA: Notificações no Navegador ---
 // Solicita permissão para notificações assim que o painel carrega
 if ('Notification' in window && Notification.permission !== 'granted') {
@@ -104,6 +108,7 @@ function carregarChamados() {
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
+            chamado.id = id; // Adiciona o ID ao objeto do chamado
             todosOsChamados.push({ id, ...chamado }); // Adiciona o chamado à lista de exportação
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
@@ -198,7 +203,73 @@ function carregarChamados() {
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
 
+        // --- MELHORIA: Atualiza os gráficos com os novos dados ---
+        atualizarGraficos(todosOsChamados);
+
         isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
+    });
+}
+
+// --- MELHORIA: Função para criar/atualizar os gráficos ---
+function atualizarGraficos(chamados) {
+    const ctxStatus = document.getElementById('graficoStatus').getContext('2d');
+    const ctxSetores = document.getElementById('graficoSetores').getContext('2d');
+
+    // 1. Gráfico de Chamados por Status
+    const contagemStatus = chamados.reduce((acc, chamado) => {
+        const status = chamado.status || 'Pendente';
+        acc[status] = (acc[status] || 0) + 1;
+        return acc;
+    }, {});
+
+    if (graficoStatusInstance) graficoStatusInstance.destroy();
+    graficoStatusInstance = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(contagemStatus),
+            datasets: [{
+                label: 'Chamados por Status',
+                data: Object.values(contagemStatus),
+                backgroundColor: ['#f39c12', '#3498db', '#e74c3c', '#2ecc71'],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'Chamados por Status' }
+            }
+        }
+    });
+
+    // 2. Gráfico de Chamados por Setor
+    const contagemSetores = chamados.reduce((acc, chamado) => {
+        const setor = chamado.setor || 'Não informado';
+        acc[setor] = (acc[setor] || 0) + 1;
+        return acc;
+    }, {});
+
+    if (graficoSetoresInstance) graficoSetoresInstance.destroy();
+    graficoSetoresInstance = new Chart(ctxSetores, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(contagemSetores),
+            datasets: [{
+                label: 'Nº de Chamados',
+                data: Object.values(contagemSetores),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Deixa o gráfico deitado (barras horizontais)
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Chamados por Setor' }
+            }
+        }
     });
 }
 
@@ -213,6 +284,27 @@ document.addEventListener('visibilitychange', () => {
 
 
 // Event Listeners para Ações
+
+const filtroInput = document.getElementById('filtro');
+
+// Event listener para o campo de filtro
+filtroInput.addEventListener('input', () => {
+    const termo = filtroInput.value.toLowerCase();
+    const todosOsCards = document.querySelectorAll('.chamado-card');
+
+    todosOsCards.forEach(card => {
+        const chamado = JSON.parse(card.dataset.chamado);
+        const nome = chamado.nome.toLowerCase();
+        const setor = chamado.setor.toLowerCase();
+        const problema = chamado.problema.toLowerCase();
+
+        if (nome.includes(termo) || setor.includes(termo) || problema.includes(termo)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
 
 // Logout
 btnLogout.addEventListener('click', async () => {

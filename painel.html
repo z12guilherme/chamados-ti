@@ -11,8 +11,18 @@
         <div class="chamado-header">
             <h2>Painel de Chamados T.I</h2>
             <div class="header-actions">
+                <input type="text" id="filtro" placeholder="Filtrar por nome, setor ou problema..." class="filtro-input">
                 <button id="btnExportarExcel" class="btn-export">Exportar Relatório</button>
                 <button id="btnLogout" class="btn-logout">Sair</button>
+            </div>
+        </div>
+
+        <!-- MELHORIA: Dashboard com Gráficos -->
+        <div class="dashboard-container">
+            <h3>Estatísticas Gerais</h3>
+            <div class="graficos-grid">
+                <div class="grafico-wrapper"><canvas id="graficoStatus"></canvas></div>
+                <div class="grafico-wrapper"><canvas id="graficoSetores"></canvas></div>
             </div>
         </div>
 
@@ -77,6 +87,8 @@
         </div>
     </div>
 
+    <!-- Adiciona a biblioteca Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script type="module" src="js/painel.js"></script>
 </body>

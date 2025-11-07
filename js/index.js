@@ -16,11 +16,17 @@ form.addEventListener('submit', async (e) => {
     const setor = document.getElementById('setor').value;
     const problema = document.getElementById('problema').value;
     const urgencia = document.querySelector('input[name="urgencia"]:checked').value;
+
+    // Gera um protocolo simples e único
+    const ano = new Date().getFullYear();
+    const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const protocolo = `CH-${ano}-${randomId}`;
     
     try {
         // Salva o novo chamado diretamente no banco de dados Firestore
         await addDoc(collection(db, "chamados"), {
-            nome,
+            protocolo,
+            nome, // O protocolo é salvo junto com os outros dados
             setor,
             problema,
             urgencia,
@@ -32,7 +38,7 @@ form.addEventListener('submit', async (e) => {
 
         // Mostra a mensagem de sucesso diretamente
         mensagemEl.className = 'message success';
-        mensagemEl.textContent = '✅ Chamado aberto com sucesso! Obrigado.';
+        mensagemEl.textContent = `✅ Chamado aberto com sucesso! Anote seu protocolo: ${protocolo}`;
         mensagemEl.style.display = 'block';
 
     } catch (error) {
