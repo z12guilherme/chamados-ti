@@ -23,7 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 formConsulta.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const protocoloInput = document.getElementById('protocolo').value.trim().toUpperCase();
+    let protocoloInput = document.getElementById('protocolo').value.trim().toUpperCase();
+
+    // Remove o '#' se o usuário o digitar, tornando a busca mais flexível.
+    if (protocoloInput.startsWith('#')) { protocoloInput = protocoloInput.substring(1); }
 
     if (!protocoloInput) {
         exibirResultado('<p class="error">Por favor, insira um protocolo.</p>');
