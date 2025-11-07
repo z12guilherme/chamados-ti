@@ -1,52 +1,67 @@
 // js/consulta.js
 import { db, dbFunctions } from './firebase-init.js';
+
 const { collection, query, where, getDocs } = dbFunctions;
 
 const formConsulta = document.getElementById('formConsulta');
-const resultadoEl = document.getElementById('resultadoConsulta');
-const mensagemEl = document.getElementById('mensagem');
 const btnConsultar = document.getElementById('btnConsultar');
+const resultadoEl = document.getElementById('resultadoConsulta');
 
 formConsulta.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const protocoloInput = document.getElementById('protocolo').value.trim().toUpperCase();
+
+    if (!protocoloInput) {
+        exibirResultado('<p class="error">Por favor, insira um protocolo.</p>');
+        return;
+    }
+
     btnConsultar.disabled = true;
     btnConsultar.textContent = 'Buscando...';
-    
     resultadoEl.style.display = 'none';
-    mensagemEl.style.display = 'none';
-
-    const protocolo = document.getElementById('protocolo').value.trim().toUpperCase();
+    resultadoEl.innerHTML = '';
 
     try {
-        const q = query(collection(db, "chamados"), where("protocolo", "==", protocolo));
+        const q = query(collection(db, "chamados"), where("protocolo", "==", protocoloInput));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            mensagemEl.className = 'message error';
-            mensagemEl.textContent = '❌ Nenhum chamado encontrado com este protocolo.';
-            mensagemEl.style.display = 'block';
+            exibirResultado(`<p class="error">❌ Nenhum chamado encontrado com o protocolo <strong>${protocoloInput}</strong>. Verifique o número e tente novamente.</p>`);
         } else {
             const chamado = querySnapshot.docs[0].data();
-            const dataAbertura = chamado.dataAbertura.toDate().toLocaleString('pt-BR');
+            const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
 
-            resultadoEl.innerHTML = `
-                <h3>Detalhes do seu Chamado</h3>
-                <p><strong>Status:</strong> <span class="status-tag">${chamado.status}</span></p>
-                <p><strong>Problema Reportado:</strong> ${chamado.problema}</p>
-                <p><strong>Aberto em:</strong> ${dataAbertura}</p>
-                ${chamado.status === 'Resolvido' && chamado.resolucao ? `<p><strong>Solução:</strong> ${chamado.resolucao}</p>` : ''}
-                ${chamado.status === 'Aguardando Peça' && chamado.pecaAguardando ? `<p><strong>Informação:</strong> Aguardando a peça '${chamado.pecaAguardando}'.</p>` : ''}
+            const resolucaoHtml = chamado.status === 'Resolvido' && chamado.resolucao
+                ? `<div class="info-item"><strong>Solução:</strong><p>${chamado.resolucao}</p></div>`
+                : '';
+            
+            const pecaHtml = chamado.status === 'Aguardando Peça' && chamado.pecaAguardando
+                ? `<div class="info-item"><strong>Peça em Aguardo:</strong><p>${chamado.pecaAguardando}</p></div>`
+                : '';
+
+            const resultadoHtml = `
+                <h4>Detalhes do Chamado</h4>
+                <div class="info-item"><strong>Protocolo:</strong><p>${chamado.protocolo}</p></div>
+                <div class="info-item"><strong>Status:</strong><p class="status-tag status-consulta ${chamado.status.toLowerCase().replace(/\s+/g, '-')}">${chamado.status}</p></div>
+                <div class="info-item"><strong>Solicitante:</strong><p>${chamado.nome}</p></div>
+                <div class="info-item"><strong>Setor:</strong><p>${chamado.setor}</p></div>
+                <div class="info-item"><strong>Problema Reportado:</strong><p>${chamado.problema}</p></div>
+                <div class="info-item"><strong>Data de Abertura:</strong><p>${dataAbertura}</p></div>
+                ${pecaHtml}
+                ${resolucaoHtml}
             `;
-            resultadoEl.style.display = 'block';
+            exibirResultado(resultadoHtml);
         }
-
     } catch (error) {
         console.error("Erro ao consultar chamado:", error);
-        mensagemEl.className = 'message error';
-        mensagemEl.textContent = '❌ Ocorreu um erro ao buscar as informações. Tente novamente.';
-        mensagemEl.style.display = 'block';
+        exibirResultado('<p class="error">❌ Ocorreu um erro ao buscar as informações. Tente novamente mais tarde.</p>');
     } finally {
         btnConsultar.disabled = false;
         btnConsultar.textContent = 'Consultar';
     }
 });
+
+function exibirResultado(html) {
+    resultadoEl.innerHTML = html;
+    resultadoEl.style.display = 'block';
+}

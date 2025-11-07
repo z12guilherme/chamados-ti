@@ -38,7 +38,7 @@ form.addEventListener('submit', async (e) => {
 
         // Mostra a mensagem de sucesso diretamente
         mensagemEl.className = 'message success';
-        mensagemEl.textContent = `✅ Chamado aberto com sucesso! Anote seu protocolo: ${protocolo}`;
+        mensagemEl.innerHTML = `✅ Chamado aberto com sucesso! Anote seu protocolo: <strong>${protocolo}</strong>. <a href="consulta.html?protocolo=${protocolo}">Clique aqui para consultar.</a>`;
         mensagemEl.style.display = 'block';
 
     } catch (error) {

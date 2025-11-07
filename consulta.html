@@ -1,3 +1,4 @@
+<!-- public/consulta.html -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -9,8 +10,9 @@
 <body>
     <div class="container">
         <div class="form-header" style="text-align: center;">
+            <img src="assets/logo.jpg" alt="Logo da Empresa" class="form-logo">
             <h1>🔎 Consultar Chamado</h1>
-            <p>Digite o protocolo do seu chamado para ver o status.</p>
+            <p>Insira o protocolo para verificar o status do seu chamado.</p>
         </div>
         
         <form id="formConsulta">
@@ -20,17 +22,18 @@
                     <input type="text" id="protocolo" required placeholder="Ex: CH-2025-ABCD">
                 </div>
             </div>
+
             <button type="submit" id="btnConsultar">Consultar</button>
         </form>
 
-        <div id="resultadoConsulta" style="display: none; margin-top: 2rem;">
-            <!-- O status do chamado será exibido aqui -->
+        <!-- Área para exibir o resultado da consulta -->
+        <div id="resultadoConsulta" class="resultado-consulta-container" style="display: none;">
+            <!-- O resultado será inserido aqui via JavaScript -->
         </div>
-        <div id="mensagem" class="message" style="display: none;"></div>
     </div>
 
     <div class="footer">
-        <p>&copy; 2025 Rede DMI | <a href="index.html">Abrir um novo chamado</a></p>
+        <p>&copy; 2025 Rede DMI | Sistema de Chamados T.I. | <a href="index.html">Abrir um novo chamado</a></p>
     </div>
 
     <script type="module" src="js/consulta.js"></script>
