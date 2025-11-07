@@ -1,10 +1,16 @@
 {
   "hosting": {
-    "public": "public",
+    "public": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "README.md",
+      "MANUAL_TECNICO.md",
+      "package.json",
+      "package-lock.json",
+      "atualizar-protocolos.js",
+      "serviceAccountKey.json"
     ]
   }
 }
