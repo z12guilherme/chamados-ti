@@ -40,6 +40,12 @@ if ('Notification' in window && Notification.permission !== 'granted') {
 }
 let isFirstLoad = true; // Flag para evitar notificação no primeiro carregamento
 
+// --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
+const audio = new Audio('../sounds/notification.mp3');
+const originalTitle = document.title;
+let intervalId = null; // Controla o piscar do título
+
+
 // Proteção de Rota e Carregamento de Dados
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -75,12 +81,26 @@ function carregarChamados() {
         // --- MELHORIA: Lógica de Notificação ---
         if (isUpdate && querySnapshot.docChanges().some(change => change.type === 'added')) {
             const newDoc = querySnapshot.docChanges().find(change => change.type === 'added').doc.data();
+            
+            // Notificação de Desktop (já implementada)
             if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('Novo Chamado Aberto!', {
                     body: `Solicitante: ${newDoc.nome}\nSetor: ${newDoc.setor}`,
                 });
             }
+
+            // --- MELHORIA 2: Tocar som e piscar título ---
+            audio.play().catch(e => console.log("Não foi possível tocar o som. Interação do usuário pode ser necessária."));
+
+            // Começa a piscar o título se já não estiver piscando
+            if (!intervalId) {
+                intervalId = setInterval(() => {
+                    document.title = document.title === originalTitle ? '*** NOVO CHAMADO! ***' : originalTitle;
+                }, 1000);
+            }
         }
+
+
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
@@ -181,6 +201,15 @@ function carregarChamados() {
         isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
     });
 }
+
+// --- MELHORIA 2: Para de piscar o título quando o usuário volta para a aba ---
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        clearInterval(intervalId);
+        intervalId = null;
+        document.title = originalTitle;
+    }
+});
 
 
 // Event Listeners para Ações
