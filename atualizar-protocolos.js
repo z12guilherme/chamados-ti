@@ -50,7 +50,7 @@ async function atribuirProtocolosAntigos() {
     if (atualizacoes > 0) {
       console.log(`\nIniciando a atualização de ${atualizacoes} chamados...`);
       await batch.commit(); // Envia todas as atualizações para o Firebase
-      console.log('✅ Sucesso! Todos os chamados antigos foram atualizados com um novo protocolo.');
+      console.log('✅ Sucesso! Todos os seus chamados antigos foram atualizados com um novo protocolo.');
     } else {
       console.log('✅ Nenhum chamado precisou ser atualizado. Todos já possuem protocolo.');
     }
