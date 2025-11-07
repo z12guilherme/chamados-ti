@@ -5,3 +5,6 @@
 # Este arquivo é pessoal e não deve ser compartilhado.
 # Crie o seu manualmente seguindo o README.md.
 /js/firebase-config.js
+
+# Chave de administrador do Firebase (NUNCA COMPARTILHAR)
+/serviceAccountKey.json
