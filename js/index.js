@@ -22,32 +22,24 @@ form.addEventListener('submit', async (e) => {
     const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
     const protocolo = `CH-${ano}-${randomId}`;
     
-    try {
-        // Salva o novo chamado diretamente no banco de dados Firestore
-        await addDoc(collection(db, "chamados"), {
-            protocolo,
-            nome, // O protocolo é salvo junto com os outros dados
-            setor,
-            problema,
-            urgencia,
-            status: 'Pendente',
-            dataAbertura: serverTimestamp()
-        });
-
-        form.reset();
-
-        // Mostra a mensagem de sucesso diretamente
-        mensagemEl.className = 'message success';
-        mensagemEl.innerHTML = `✅ Chamado aberto com sucesso! Anote seu protocolo: <strong>${protocolo}</strong>. <a href="consulta.html?protocolo=${protocolo}">Clique aqui para consultar.</a>`;
-        mensagemEl.style.display = 'block';
-
-    } catch (error) {
-        console.error("Erro ao abrir chamado: ", error);
-        mensagemEl.className = 'message error'; 
-        mensagemEl.textContent = '❌ Ocorreu um erro ao enviar seu chamado. Tente novamente.';
-        mensagemEl.style.display = 'block';
-    } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Abrir Chamado';
-    }
+    // Salva o novo chamado no Firestore
+    await addDoc(collection(db, "chamados"), {
+        protocolo,
+        nome,
+        setor,
+        problema,
+        urgencia,
+        status: 'Pendente',
+        dataAbertura: serverTimestamp()
+    });
+    
+    // Limpa o formulário e exibe a mensagem de sucesso com o protocolo
+    form.reset();
+    mensagemEl.className = 'message success';
+    mensagemEl.innerHTML = `✅ Chamado aberto com sucesso! Anote seu protocolo: <strong>${protocolo}</strong>. <a href="consulta.html?protocolo=${protocolo}">Clique aqui para consultar.</a>`;
+    mensagemEl.style.display = 'block';
+    
+    // Reabilita o botão
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = 'Abrir Chamado';
 });

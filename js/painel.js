@@ -45,7 +45,7 @@ if ('Notification' in window && Notification.permission !== 'granted') {
 let isFirstLoad = true; // Flag para evitar notificação no primeiro carregamento
 
 // --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
-const audio = new Audio('../sounds/notification.mp3');
+const audio = new Audio('../assets/sounds/notification.mp3');
 const originalTitle = document.title;
 let intervalId = null; // Controla o piscar do título
 
