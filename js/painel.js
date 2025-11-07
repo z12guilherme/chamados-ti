@@ -33,6 +33,13 @@ let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou muda
 let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
 let todosOsChamados = []; // Armazena todos os chamados para a exportação
 
+// --- MELHORIA: Notificações no Navegador ---
+// Solicita permissão para notificações assim que o painel carrega
+if ('Notification' in window && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+}
+let isFirstLoad = true; // Flag para evitar notificação no primeiro carregamento
+
 // Proteção de Rota e Carregamento de Dados
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -49,6 +56,7 @@ function carregarChamados() {
     const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
 
     onSnapshot(q, (querySnapshot) => {        
+        const isUpdate = !isFirstLoad; // Considera uma atualização se não for o primeiro carregamento
         loader.style.display = 'none';
 
         // Limpa as listas antes de recarregar
@@ -64,6 +72,15 @@ function carregarChamados() {
             resolvidos: []
         };
 
+        // --- MELHORIA: Lógica de Notificação ---
+        if (isUpdate && querySnapshot.docChanges().some(change => change.type === 'added')) {
+            const newDoc = querySnapshot.docChanges().find(change => change.type === 'added').doc.data();
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Novo Chamado Aberto!', {
+                    body: `Solicitante: ${newDoc.nome}\nSetor: ${newDoc.setor}`,
+                });
+            }
+        }
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
@@ -160,6 +177,8 @@ function carregarChamados() {
         } else {
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
+
+        isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
     });
 }
 
