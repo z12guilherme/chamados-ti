@@ -66,6 +66,22 @@
                 <textarea id="problema" rows="5" required placeholder="Ex: Meu computador não liga e faz um barulho estranho."></textarea>
             </div>
 
+            <div class="form-group">
+                <label>Anexo (Opcional)</label>
+                <p class="form-hint">
+                    Para arquivos pequenos (até 750KB), anexe diretamente. <br>
+                    Para arquivos maiores, hospede no Google Drive e cole o link abaixo.
+                </p>
+
+                <label for="anexo" class="sub-label">Anexar arquivo diretamente:</label>
+                <input type="file" id="anexo" class="input-file" accept="image/*,application/pdf">
+
+                <div class="anexo-separator">ou</div>
+
+                <label for="anexoUrl" class="sub-label">Colar link de anexo externo:</label>
+                <input type="url" id="anexoUrl" placeholder="https://drive.google.com/..." class="input-file">
+            </div>
+
             <button type="submit" id="btnSubmit">Abrir Chamado</button>
         </form>
 

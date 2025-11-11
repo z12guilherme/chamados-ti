@@ -95,6 +95,24 @@ label {
     color: var(--text-secondary);
 }
 
+.sub-label {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #a9b1d6;
+    margin-top: 15px;
+}
+
+.anexo-separator {
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .input-wrapper {
     position: relative;
     display: flex;
@@ -247,6 +265,11 @@ button:disabled {
     background-color: rgba(247, 118, 142, 0.15);
     color: var(--danger-color);
     border-color: var(--danger-color);
+}
+.message.warning {
+    background-color: rgba(224, 175, 104, 0.15);
+    color: var(--warning-color);
+    border-color: var(--warning-color);
 }
 
 .chamado-card {
@@ -630,4 +653,120 @@ button:disabled {
     .modal-actions {
         flex-direction: column;
     }
+}
+
+/* CORREÇÃO: Reintroduzindo os estilos do Modal */
+.modal-viewer {
+    display: none; /* Escondido por padrão */
+    position: fixed; 
+    z-index: 1001; /* Fica acima de tudo */
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.modal-viewer-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+}
+
+.close-viewer {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-viewer:hover,
+.close-viewer:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+
+.anexo-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.anexo-link:hover {
+    text-decoration: underline;
+}
+
+/* NOVO: Estilos para o Modal de Visualização de Imagem */
+.modal-viewer {
+    display: none; /* Escondido por padrão */
+    position: fixed; 
+    z-index: 1001; /* Fica acima de tudo */
+    padding-top: 60px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.modal-viewer-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+}
+
+.close-viewer {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.close-viewer:hover,
+.close-viewer:focus {
+    color: #bbb;
+    text-decoration: none;
+}
+
+.anexo-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.anexo-link:hover {
+    text-decoration: underline;
 }

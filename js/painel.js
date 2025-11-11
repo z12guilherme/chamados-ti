@@ -29,6 +29,12 @@ const campoPeca = document.getElementById('campoPeca');
 const textoPeca = document.getElementById('textoPeca');
 const btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
 
+// CORREÇÃO: Reintroduzindo os elementos do Modal
+const modalAnexo = document.getElementById('modalAnexo');
+const imgAnexoViewer = document.getElementById('imgAnexoViewer');
+const closeViewerBtn = document.querySelector('.close-viewer');
+
+
 let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou mudança de status
 let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
 let todosOsChamados = []; // Armazena todos os chamados para a exportação
@@ -109,7 +115,7 @@ function carregarChamados() {
             const chamado = documento.data();
             const id = documento.id;
             chamado.id = id; // Adiciona o ID ao objeto do chamado
-            todosOsChamados.push({ id, ...chamado }); // Adiciona o chamado à lista de exportação
+            todosOsChamados.push(chamado); // Adiciona o chamado completo à lista de exportação
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
             const status = chamado.status || 'Pendente';
@@ -137,6 +143,18 @@ function carregarChamados() {
                 ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
                 : '';
 
+            // ATUALIZADO: Cria o link de anexo correto (Base64 ou URL externa)
+            let anexoHtml = '';
+            if (chamado.anexoBase64) {
+                anexoHtml = `<div class="anexo-info">
+                     <a href="#" class="anexo-link" data-chamado-id="${id}">Ver Anexo</a>
+                   </div>`;
+            } else if (chamado.anexoUrl) {
+                anexoHtml = `<div class="anexo-info">
+                     <a href="${chamado.anexoUrl}" class="anexo-link" target="_blank" rel="noopener noreferrer">Ver Anexo (Link Externo)</a>
+                   </div>`;
+            }
+
             const card = document.createElement('div');
             card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
             card.dataset.id = id;
@@ -157,6 +175,7 @@ function carregarChamados() {
                 <div class="problema-resumo">
                     <p>${chamado.problema}</p>
                 </div>
+                ${anexoHtml}
                 ${pecaHtml}
                 ${resolucaoHtml}
                 <div class="card-footer">
@@ -355,6 +374,32 @@ btnExportarExcel.addEventListener('click', () => {
 // Delegação de eventos para os botões de ação nos cards
 document.querySelector('.categorias-container').addEventListener('click', (e) => {
     const target = e.target;
+
+    // CORREÇÃO: Lógica para visualizar o anexo (Modal ou Nova Aba)
+    // Esta verificação deve vir ANTES das outras que dependem de 'data-id'
+    if (target.classList.contains('anexo-link')) {
+        // ATUALIZADO: Apenas executa a lógica se for um anexo interno (com data-chamado-id)
+        // Se for um link externo (Google Drive), o navegador cuidará disso.
+        if (target.dataset.chamadoId) {
+            e.preventDefault(); // Impede que o link '#' navegue
+            const chamadoId = target.dataset.chamadoId;
+            const chamadoCompleto = todosOsChamados.find(c => c.id === chamadoId);
+    
+            if (chamadoCompleto && chamadoCompleto.anexoBase64) {
+                const tipoAnexo = chamadoCompleto.anexoInfo?.tipo || '';
+    
+                if (tipoAnexo.startsWith('image/')) {
+                    // Se for imagem, abre no modal
+                    abrirModalAnexo(chamadoCompleto.anexoBase64);
+                } else {
+                    // Se for PDF ou outro tipo, abre em nova aba
+                    window.open(chamadoCompleto.anexoBase64, '_blank');
+                }
+            }
+        }
+    }
+
+    // As ações abaixo dependem do 'data-id'
     if (!target.dataset.id) return;
 
     chamadoIdParaAcao = target.dataset.id;
@@ -390,6 +435,18 @@ btnModalConfirmar.addEventListener('click', async () => {
         chamadoIdParaAcao = null;
     }
 });
+
+// CORREÇÃO: Funções para controlar o Modal de Anexo
+function abrirModalAnexo(src) {
+    modalAnexo.style.display = "block";
+    imgAnexoViewer.src = src;
+}
+
+// Fecha o modal ao clicar no 'X'
+closeViewerBtn.onclick = function() {
+    modalAnexo.style.display = "none";
+}
+
 
 // Ações do Modal de Status
 btnStatusCancelar.addEventListener('click', () => {
