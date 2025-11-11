@@ -56,28 +56,14 @@ const originalTitle = document.title;
 let intervalId = null; // Controla o piscar do título
 
 
-import { onAuthStateChangedObserver, logout } from './auth.js';
-
 // Proteção de Rota e Carregamento de Dados
-onAuthStateChangedObserver((user) => {
+onAuthStateChanged(auth, (user) => {
     if (user) {
         // Usuário está logado, busca os chamados
         carregarChamados();
     } else {
         // Usuário não está logado, redireciona para a página de login
         window.location.href = 'login.html';
-    }
-});
-
-// ... (o resto do arquivo)
-
-// Logout
-btnLogout.addEventListener('click', async () => {
-    try {
-        await logout();
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error("Erro ao fazer logout:", error);
     }
 });
 
@@ -277,28 +263,66 @@ function atualizarGraficos(chamados) {
     });
 
     // 2. Gráfico de Chamados por Setor
-    const contagemSetores = chamados.reduce((acc, chamado) => {
-        const setor = chamado.setor || 'Não informado';
-        acc[setor] = (acc[setor] || 0) + 1;
+    let contagemSetores = chamados.reduce((acc, chamado) => {
+        let setor = chamado.setor || 'Não Informado';
+
+        // --- MELHORIA: Normaliza o nome do setor para agrupar corretamente ---
+        // Ex: "faturamento", "Faturamento" e " FATURAMENTO " viram "Faturamento"
+        const setorNormalizado = setor
+            .trim()
+            .toLowerCase()
+            .split(' ')
+            .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+            .join(' ');
+
+        acc[setorNormalizado] = (acc[setorNormalizado] || 0) + 1;
         return acc;
     }, {});
+
+    // --- MELHORIA: Ordenar, limitar e agrupar setores ---
+    const LIMITE_SETORES = 7;
+    let setoresOrdenados = Object.entries(contagemSetores).sort(([, a], [, b]) => b - a);
+
+    let labelsSetores = [];
+    let dadosSetores = [];
+
+    if (setoresOrdenados.length > LIMITE_SETORES) {
+        const topSetores = setoresOrdenados.slice(0, LIMITE_SETORES);
+        const outrosSetores = setoresOrdenados.slice(LIMITE_SETORES);
+        
+        topSetores.forEach(([setor, contagem]) => {
+            labelsSetores.push(setor);
+            dadosSetores.push(contagem);
+        });
+
+        const contagemOutros = outrosSetores.reduce((acc, [, contagem]) => acc + contagem, 0);
+        labelsSetores.push('Outros');
+        dadosSetores.push(contagemOutros);
+    } else {
+        setoresOrdenados.forEach(([setor, contagem]) => {
+            labelsSetores.push(setor);
+            dadosSetores.push(contagem);
+        });
+    }
 
     if (graficoSetoresInstance) graficoSetoresInstance.destroy();
     graficoSetoresInstance = new Chart(ctxSetores, {
         type: 'bar',
         data: {
-            labels: Object.keys(contagemSetores),
+            labels: labelsSetores,
             datasets: [{
                 label: 'Nº de Chamados',
-                data: Object.values(contagemSetores),
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                data: dadosSetores,
+                // --- MELHORIA: Paleta de cores mais rica ---
+                backgroundColor: ['#7aa2f7', '#bb9af7', '#f7768e', '#e0af68', '#9ece6a', '#7dcfff', '#c0caf5', '#a9b1d6'],
+                borderColor: '#414868',
                 borderWidth: 1
             }]
         },
         options: {
             indexAxis: 'y', // Deixa o gráfico deitado (barras horizontais)
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
                 title: { display: true, text: 'Chamados por Setor' }
