@@ -56,14 +56,28 @@ const originalTitle = document.title;
 let intervalId = null; // Controla o piscar do título
 
 
+import { onAuthStateChangedObserver, logout } from './auth.js';
+
 // Proteção de Rota e Carregamento de Dados
-onAuthStateChanged(auth, (user) => {
+onAuthStateChangedObserver((user) => {
     if (user) {
         // Usuário está logado, busca os chamados
         carregarChamados();
     } else {
         // Usuário não está logado, redireciona para a página de login
         window.location.href = 'login.html';
+    }
+});
+
+// ... (o resto do arquivo)
+
+// Logout
+btnLogout.addEventListener('click', async () => {
+    try {
+        await logout();
+        window.location.href = 'index.html';
+    } catch (error) {
+        console.error("Erro ao fazer logout:", error);
     }
 });
 

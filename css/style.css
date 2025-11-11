@@ -770,3 +770,101 @@ button:disabled {
 .anexo-link:hover {
     text-decoration: underline;
 }
+
+/* ============================================= */
+/* == ESTILOS PARA O CARD DE CONSULTA (NOVO) == */
+/* ============================================= */
+
+.card-consulta {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin-top: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
+}
+
+.card-consulta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-consulta-header .protocolo-info span,
+.card-consulta-header .status-info span {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.card-consulta-header .protocolo-info h3 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: var(--primary-color);
+}
+
+.card-consulta-header .status-info {
+    text-align: right;
+}
+
+.card-consulta-header .status-tag {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.card-consulta-body {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.info-item.info-full-width {
+    grid-column: 1 / -1; /* Faz o item ocupar a largura total */
+}
+
+.info-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.info-section h4 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.info-section p {
+    margin: 0;
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    line-height: 1.6;
+}
+
+/* Ajuste para telas menores */
+@media (max-width: 600px) {
+    .info-grid {
+        grid-template-columns: 1fr; /* Coluna única em telas pequenas */
+        gap: 1rem;
+    }
+
+    .card-consulta-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .card-consulta-header .status-info {
+        text-align: left;
+    }
+}

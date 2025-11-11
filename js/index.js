@@ -31,6 +31,8 @@ function converterImagemParaBase64(file) {
 }
 
 
+import { showMessage } from './utils.js';
+
 formChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -77,14 +79,10 @@ formChamado.addEventListener('submit', async (e) => {
         
         // Limpa o formulário e exibe a mensagem de sucesso com o protocolo
         formChamado.reset();
-        mensagemEl.className = 'message success';
-        mensagemEl.innerHTML = `✅ Chamado aberto com sucesso! Anote seu protocolo: <strong>${protocolo}</strong>. <a href="consulta.html?protocolo=${protocolo}">Clique aqui para consultar.</a>`;
-        mensagemEl.style.display = 'block';
+        showMessage(mensagemEl, `✅ Chamado aberto com sucesso! Anote seu protocolo: <strong>${protocolo}</strong>. <a href="consulta.html?protocolo=${protocolo}">Clique aqui para consultar.</a>`, 'success');
 
     } catch (error) {
-        mensagemEl.className = 'message error';
-        mensagemEl.textContent = `❌ Erro: ${error.message}`;
-        mensagemEl.style.display = 'block';
+        showMessage(mensagemEl, `❌ Erro: ${error.message}`, 'error');
     } finally {
         // Reabilita o botão
         btnSubmit.disabled = false;

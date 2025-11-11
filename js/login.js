@@ -1,6 +1,10 @@
 // js/login.js
-import { auth, authFunctions } from './firebase-init.js';
-const { signInWithEmailAndPassword } = authFunctions;
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const formLogin = document.getElementById('formLogin');
 const mensagemEl = document.getElementById('mensagem');
