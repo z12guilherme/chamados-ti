@@ -115,7 +115,7 @@ function carregarChamados() {
             const chamado = documento.data();
             const id = documento.id;
             chamado.id = id; // Adiciona o ID ao objeto do chamado
-            todosOsChamados.push(chamado); // Adiciona o chamado completo à lista de exportação
+            // Adiciona o chamado completo à lista de exportação
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
             const status = chamado.status || 'Pendente';
@@ -159,6 +159,7 @@ function carregarChamados() {
             card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
             card.dataset.id = id;
             card.dataset.chamado = JSON.stringify(chamado);
+            todosOsChamados.push(chamado);
             
             card.innerHTML = `
                 <div class="card-header">

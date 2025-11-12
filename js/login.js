@@ -1,10 +1,5 @@
 // js/login.js
-import { firebaseConfig } from './firebase-config.js';
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+import { login } from './auth.js';
 
 const formLogin = document.getElementById('formLogin');
 const mensagemEl = document.getElementById('mensagem');
@@ -21,7 +16,7 @@ formLogin.addEventListener('submit', async (e) => {
     mensagemEl.style.display = 'none';
 
     try {
-        await signInWithEmailAndPassword(auth, email, senha);
+        await login(email, senha);
         // Se o login for bem-sucedido, redireciona para o painel
         window.location.href = 'painel.html';
 
