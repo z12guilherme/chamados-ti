@@ -346,24 +346,34 @@ document.addEventListener('visibilitychange', () => {
 
 const filtroInput = document.getElementById('filtro');
 
-// Event listener para o campo de filtro
-filtroInput.addEventListener('input', () => {
-    const termo = filtroInput.value.toLowerCase();
+// --- MELHORIA: Debounce para o filtro ---
+let debounceTimer;
+
+function filtrarChamados() {
+    const termo = filtroInput.value.toLowerCase().trim();
     const todosOsCards = document.querySelectorAll('.chamado-card');
 
     todosOsCards.forEach(card => {
-        const chamado = JSON.parse(card.dataset.chamado);
-        const nome = chamado.nome.toLowerCase();
-        const setor = chamado.setor.toLowerCase();
-        const problema = chamado.problema.toLowerCase();
+        // Pega os dados do dataset, que é mais confiável
+        const chamadoData = JSON.parse(card.dataset.chamado);
+        const textoParaBuscar = [
+            chamadoData.protocolo || '',
+            chamadoData.nome || '',
+            chamadoData.setor || '',
+            chamadoData.problema || ''
+        ].join(' ').toLowerCase();
 
-        if (nome.includes(termo) || setor.includes(termo) || problema.includes(termo)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
+        card.style.display = textoParaBuscar.includes(termo) ? 'block' : 'none';
     });
+}
+
+filtroInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        filtrarChamados();
+    }, 300); // Atraso de 300ms
 });
+
 
 // Logout
 btnLogout.addEventListener('click', async () => {
