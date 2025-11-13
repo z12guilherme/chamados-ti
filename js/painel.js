@@ -1,7 +1,7 @@
 // js/painel.js
 import { db, auth, dbFunctions, authFunctions } from './firebase-init.js';
 
-const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } = dbFunctions;
+const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDocs, limit, startAfter, where, serverTimestamp, arrayUnion } = dbFunctions;
 const { onAuthStateChanged, signOut } = authFunctions;
 
 const btnLogout = document.getElementById('btnLogout');
@@ -544,7 +544,12 @@ formStatus.addEventListener('submit', async (e) => {
         const novoStatus = selectStatus.value;
         const chamadoRef = doc(db, "chamados", chamadoIdParaAcao);
         const dadosParaAtualizar = {
-            status: novoStatus
+            status: novoStatus,
+            historico: arrayUnion({ // Adiciona um novo evento ao array de histórico
+                status: novoStatus,
+                data: serverTimestamp(),
+                responsavel: auth.currentUser.email // Registra quem alterou
+            })
         };
 
         if (novoStatus === 'Resolvido') {

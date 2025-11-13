@@ -73,6 +73,12 @@ formChamado.addEventListener('submit', async (e) => {
             status: 'Pendente',
             dataAbertura: serverTimestamp(),
             anexoBase64: anexoBase64 || null, // Salva a string Base64
+            historico: [{ // Inicia o histórico na criação do chamado
+                status: 'Pendente',
+                data: serverTimestamp(),
+                responsavel: 'Sistema'
+            }],
+            anexoBase64: anexoBase64 || null, 
             anexoInfo: anexoInfo || null,      // Salva nome e tipo do arquivo
             anexoUrl: anexoUrl || null         // Salva a URL do anexo grande
         });
