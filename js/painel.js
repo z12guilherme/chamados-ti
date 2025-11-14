@@ -42,6 +42,7 @@ let todosOsChamados = []; // Armazena todos os chamados para a exportação
 // --- MELHORIA: Gráficos ---
 let graficoStatusInstance = null;
 let graficoSetoresInstance = null;
+let graficoUrgenciaInstance = null;
 
 // --- MELHORIA: Notificações no Navegador ---
 // Solicita permissão para notificações assim que o painel carrega
@@ -274,30 +275,67 @@ function carregarChamados() {
 function atualizarGraficos(chamados) {
     const ctxStatus = document.getElementById('graficoStatus').getContext('2d');
     const ctxSetores = document.getElementById('graficoSetores').getContext('2d');
+    const ctxUrgencia = document.getElementById('graficoUrgencia').getContext('2d');
+
+    // --- Lógica para os KPIs ---
+    const totalChamados = chamados.length;
+    const totalPendentes = chamados.filter(c => (c.status || '').toLowerCase() === 'pendente').length;
+    const mesAtual = new Date().getMonth();
+    const anoAtual = new Date().getFullYear();
+    const resolvidosNoMes = chamados.filter(c => {
+        const statusResolvido = (c.status || '').toLowerCase() === 'resolvido';
+        if (statusResolvido && c.resolucao?.data) {
+            const dataResolucao = c.resolucao.data.toDate();
+            return dataResolucao.getMonth() === mesAtual && dataResolucao.getFullYear() === anoAtual;
+        }
+        return false;
+    }).length;
+
+    document.getElementById('kpi-total').textContent = totalChamados;
+    document.getElementById('kpi-pendentes').textContent = totalPendentes;
+    document.getElementById('kpi-resolvidos-mes').textContent = resolvidosNoMes;
+
+    // --- Cores dinâmicas baseadas no tema ---
+    const style = getComputedStyle(document.body);
+    const corTexto = style.getPropertyValue('--text-secondary');
+    const corGrid = style.getPropertyValue('--border-color');
+    const coresGrafico = [
+        style.getPropertyValue('--primary-color'),
+        style.getPropertyValue('--success-color'),
+        style.getPropertyValue('--warning-color'),
+        style.getPropertyValue('--danger-color'),
+        '#bb9af7', // Roxo do tema escuro
+        '#7dcfff'  // Azul claro do tema escuro
+    ];
 
     // 1. Gráfico de Chamados por Status
     const contagemStatus = chamados.reduce((acc, chamado) => {
-        const status = chamado.status || 'Pendente';
-        acc[status] = (acc[status] || 0) + 1;
+        const statusRaw = (chamado.status || 'pendente').trim();
+        const statusDisplay = statusRaw.charAt(0).toUpperCase() + statusRaw.slice(1);
+        acc[statusDisplay] = (acc[statusDisplay] || 0) + 1;
         return acc;
     }, {});
 
     if (graficoStatusInstance) graficoStatusInstance.destroy();
     graficoStatusInstance = new Chart(ctxStatus, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: Object.keys(contagemStatus),
             datasets: [{
                 label: 'Chamados por Status',
                 data: Object.values(contagemStatus),
-                backgroundColor: ['#f39c12', '#3498db', '#e74c3c', '#2ecc71'],
+                backgroundColor: coresGrafico,
             }]
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Chamados por Status' }
+                legend: { display: false },
+                title: { display: true, text: 'Chamados por Status', color: corTexto, font: { size: 16 } }
+            },
+            scales: {
+                y: { ticks: { color: corTexto }, grid: { color: corGrid } },
+                x: { ticks: { color: corTexto }, grid: { color: 'transparent' } }
             }
         }
     });
@@ -305,21 +343,16 @@ function atualizarGraficos(chamados) {
     // 2. Gráfico de Chamados por Setor
     let contagemSetores = chamados.reduce((acc, chamado) => {
         let setor = chamado.setor || 'Não Informado';
-
-        // --- MELHORIA: Normaliza o nome do setor para agrupar corretamente ---
-        // Ex: "faturamento", "Faturamento" e " FATURAMENTO " viram "Faturamento"
         const setorNormalizado = setor
             .trim()
             .toLowerCase()
             .split(' ')
             .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1))
             .join(' ');
-
         acc[setorNormalizado] = (acc[setorNormalizado] || 0) + 1;
         return acc;
     }, {});
 
-    // --- MELHORIA: Ordenar, limitar e agrupar setores ---
     const LIMITE_SETORES = 7;
     let setoresOrdenados = Object.entries(contagemSetores).sort(([, a], [, b]) => b - a);
 
@@ -347,20 +380,48 @@ function atualizarGraficos(chamados) {
 
     if (graficoSetoresInstance) graficoSetoresInstance.destroy();
     graficoSetoresInstance = new Chart(ctxSetores, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: labelsSetores,
             datasets: [{
                 label: 'Nº de Chamados',
                 data: dadosSetores,
-                // --- MELHORIA: Paleta de cores mais rica ---
-                backgroundColor: ['#7aa2f7', '#bb9af7', '#f7768e', '#e0af68', '#9ece6a', '#7dcfff', '#c0caf5', '#a9b1d6'],
-                borderColor: '#414868',
-                borderWidth: 1
+                backgroundColor: coresGrafico,
+                borderColor: style.getPropertyValue('--surface-color'),
+                borderWidth: 2
             }]
         },
         options: {
-            indexAxis: 'y', // Deixa o gráfico deitado (barras horizontais)
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { color: corTexto } },
+                title: { display: true, text: 'Chamados por Setor', color: corTexto, font: { size: 16 } }
+            }
+        }
+    });
+
+    // 3. NOVO: Gráfico de Chamados por Urgência
+    const contagemUrgencia = chamados.reduce((acc, chamado) => {
+        const urgencia = (chamado.urgencia || 'baixa').charAt(0).toUpperCase() + (chamado.urgencia || 'baixa').slice(1);
+        acc[urgencia] = (acc[urgencia] || 0) + 1;
+        return acc;
+    }, {});
+
+    if (graficoUrgenciaInstance) graficoUrgenciaInstance.destroy();
+    graficoUrgenciaInstance = new Chart(ctxUrgencia, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(contagemUrgencia),
+            datasets: [{
+                label: 'Chamados por Urgência',
+                data: Object.values(contagemUrgencia),
+                backgroundColor: [coresGrafico[3], coresGrafico[2], coresGrafico[0]], // Vermelho, Amarelo, Azul
+                borderColor: style.getPropertyValue('--surface-color'),
+                borderWidth: 2
+            }]
+        },
+        options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {

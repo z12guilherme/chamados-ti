@@ -35,9 +35,18 @@
         <!-- MELHORIA: Dashboard com Gráficos -->
         <div class="dashboard-container">
             <h3>Estatísticas Gerais</h3>
+            <!-- NOVO: Cards de KPI -->
+            <div class="kpi-grid">
+                <div class="kpi-card"><span class="kpi-label">Total de Chamados</span><h4 class="kpi-value" id="kpi-total">0</h4></div>
+                <div class="kpi-card"><span class="kpi-label">Pendentes</span><h4 class="kpi-value" id="kpi-pendentes">0</h4></div>
+                <div class="kpi-card"><span class="kpi-label">Resolvidos no Mês</span><h4 class="kpi-value" id="kpi-resolvidos-mes">0</h4></div>
+            </div>
+
             <div class="graficos-grid">
                 <div class="grafico-wrapper"><canvas id="graficoStatus"></canvas></div>
                 <div class="grafico-wrapper"><canvas id="graficoSetores"></canvas></div>
+                <!-- NOVO: Gráfico de Urgência -->
+                <div class="grafico-wrapper"><canvas id="graficoUrgencia"></canvas></div>
             </div>
         </div>
 

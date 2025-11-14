@@ -629,9 +629,10 @@ button:disabled {
 }
 
 .graficos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: flex;
+    overflow-x: auto;
     gap: 25px;
+    padding-bottom: 15px; /* Add some padding to not cut the shadow */
 }
 
 .grafico-wrapper {
@@ -639,6 +640,7 @@ button:disabled {
     padding: 20px;
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow);
+    min-width: 300px; /* Add a min-width to prevent squishing */
 }
 
 /* Responsive adjustments */
