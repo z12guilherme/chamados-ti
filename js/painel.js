@@ -219,7 +219,6 @@ function carregarChamados() {
             }
 
             if (chamados.pendentes.length > 0) {
-                // CORREÇÃO: Garante que o contêiner de ativos seja visível e adicione a lista a ele.
                 if (!document.getElementById('listaPendentes').parentNode) {
                     chamadosAtivosContainer.appendChild(listaPendentesEl);
                 }
@@ -227,10 +226,16 @@ function carregarChamados() {
                 chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
             }
             if (chamados.emAndamento.length > 0) {
+                if (!document.getElementById('listaEmAndamento').parentNode) {
+                    chamadosAtivosContainer.appendChild(listaEmAndamentoEl);
+                }
                 listaEmAndamentoEl.innerHTML = '<h4>Em Andamento</h4>';
                 chamados.emAndamento.forEach(card => listaEmAndamentoEl.appendChild(card));
             }
             if (chamados.aguardandoPeca.length > 0) {
+                if (!document.getElementById('listaAguardandoPeca').parentNode) {
+                    chamadosAtivosContainer.appendChild(listaAguardandoPecaEl);
+                }
                 listaAguardandoPecaEl.innerHTML = '<h4>Aguardando Peça</h4>';
                 chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
             }
@@ -481,10 +486,10 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
         
         selectStatus.value = chamadoAtualParaStatus.status || 'pendente';
-        textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || ''; // CORREÇÃO: Pega a descrição do objeto
-        campoResolucao.style.display = chamadoAtualParaStatus.status === 'resolvido' ? 'block' : 'none';
+        textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || '';
+        campoResolucao.style.display = (chamadoAtualParaStatus.status || '').toLowerCase() === 'resolvido' ? 'block' : 'none';
         textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
-        campoPeca.style.display = chamadoAtualParaStatus.status === 'aguardando-peça' ? 'block' : 'none';
+        campoPeca.style.display = (chamadoAtualParaStatus.status || '').toLowerCase() === 'aguardando-peça' ? 'block' : 'none';
         validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
     }
@@ -542,9 +547,9 @@ function validarFormStatus() {
     const resolucaoTexto = textoResolucao.value.trim();
     const pecaTexto = textoPeca.value.trim();
 
-    if (statusSelecionado === 'resolvido' && resolucaoTexto === '') {
+    if (statusSelecionado.toLowerCase() === 'resolvido' && resolucaoTexto === '') {
         btnSalvarStatus.disabled = true;
-    } else if (statusSelecionado === 'aguardando-peça' && pecaTexto === '') {
+    } else if (statusSelecionado.toLowerCase() === 'aguardando-peça' && pecaTexto === '') {
         btnSalvarStatus.disabled = true;
     } else {
         btnSalvarStatus.disabled = false;
