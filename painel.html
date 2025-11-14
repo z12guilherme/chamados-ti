@@ -19,10 +19,17 @@
         <div class="chamado-header">
             <h2>Painel de Chamados T.I</h2>
             <div class="header-actions">
-                <input type="text" id="filtro" placeholder="Filtrar por nome, setor ou problema..." class="filtro-input">
                 <button id="btnExportarExcel" class="btn-export">Exportar Relatório</button>
                 <button id="btnLogout" class="btn-logout">Sair</button>
             </div>
+        </div>
+
+        <!-- Seção de Filtros Avançados -->
+        <div class="filtros-container">
+            <input type="text" id="filtro" placeholder="Filtrar por protocolo, nome, setor..." class="filtro-input">
+            <select id="filtroStatus" class="filtro-select"><option value="">Todos os Status</option><option value="pendente">Pendente</option><option value="em-andamento">Em Andamento</option><option value="aguardando-peça">Aguardando Peça</option><option value="Resolvido">Resolvido</option></select>
+            <select id="filtroUrgencia" class="filtro-select"><option value="">Todas as Urgências</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select>
+            <button id="btnLimparFiltros" class="btn-limpar-filtros">Limpar Filtros</button>
         </div>
 
         <!-- MELHORIA: Dashboard com Gráficos -->

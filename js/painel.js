@@ -433,6 +433,7 @@ function criarCardChamado(chamado) {
         <div class="card-footer">
             <div class="data-abertura">Aberto em: ${dataAbertura}</div>
             <button class="btn-status" data-id="${id}">Alterar</button>
+            ${status === 'resolvido' ? `<button class="btn-reabrir" data-id="${id}">Reabrir</button>` : ''}
             <button class="btn-remover" data-id="${id}">Remover</button>
         </div>
     `;
@@ -451,35 +452,61 @@ document.addEventListener('visibilitychange', () => {
 
 // Event Listeners para Ações
 
-const filtroInput = document.getElementById('filtro');
+const filtroTextoInput = document.getElementById('filtro');
+const filtroStatusSelect = document.getElementById('filtroStatus');
+const filtroUrgenciaSelect = document.getElementById('filtroUrgencia');
+const btnLimparFiltros = document.getElementById('btnLimparFiltros');
 
 // --- MELHORIA: Debounce para o filtro ---
 let debounceTimer;
 
 function filtrarChamados() {
-    const termo = filtroInput.value.toLowerCase().trim();
+    const termo = filtroTextoInput.value.toLowerCase().trim();
+    const statusFiltro = filtroStatusSelect.value;
+    const urgenciaFiltro = filtroUrgenciaSelect.value;
     const todosOsCards = document.querySelectorAll('.chamado-card');
 
     todosOsCards.forEach(card => {
         // Pega os dados do dataset, que é mais confiável
         const chamadoData = JSON.parse(card.dataset.chamado);
+
+        // 1. Verifica o filtro de texto
         const textoParaBuscar = [
             chamadoData.protocolo || '',
             chamadoData.nome || '',
             chamadoData.setor || '',
             chamadoData.problema || ''
         ].join(' ').toLowerCase();
+        const matchTexto = textoParaBuscar.includes(termo);
 
-        card.style.display = textoParaBuscar.includes(termo) ? 'block' : 'none';
+        // 2. Verifica o filtro de status
+        const matchStatus = !statusFiltro || (chamadoData.status || '').toLowerCase() === statusFiltro.toLowerCase();
+
+        // 3. Verifica o filtro de urgência
+        const matchUrgencia = !urgenciaFiltro || (chamadoData.urgencia || '').toLowerCase() === urgenciaFiltro;
+
+        // O card só é exibido se todas as condições forem verdadeiras
+        card.style.display = matchTexto && matchStatus && matchUrgencia ? 'block' : 'none';
     });
 }
 
-filtroInput.addEventListener('input', () => {
+function limparFiltros() {
+    filtroTextoInput.value = '';
+    filtroStatusSelect.value = '';
+    filtroUrgenciaSelect.value = '';
+    filtrarChamados();
+}
+
+filtroTextoInput.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         filtrarChamados();
     }, 300); // Atraso de 300ms
 });
+
+filtroStatusSelect.addEventListener('change', filtrarChamados);
+filtroUrgenciaSelect.addEventListener('change', filtrarChamados);
+btnLimparFiltros.addEventListener('click', limparFiltros);
 
 
 // Logout
@@ -576,6 +603,22 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         campoPeca.style.display = statusNormalizado === 'aguardando-peça' ? 'block' : 'none';
         validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
+    }
+
+    if (target.classList.contains('btn-reabrir')) {
+        const chamadoId = target.dataset.id;
+        const chamadoRef = doc(db, "chamados", chamadoId);
+        updateDoc(chamadoRef, {
+            status: 'pendente',
+            resolucao: null, // Limpa a resolução anterior
+            historico: arrayUnion({
+                status: 'reaberto',
+                data: new Date(),
+                responsavel: auth.currentUser.email
+            })
+        }).then(() => {
+            console.log(`Chamado ${chamadoId} reaberto.`);
+        });
     }
 });
 
