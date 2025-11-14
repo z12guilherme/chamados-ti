@@ -426,7 +426,7 @@ function atualizarGraficos(chamados) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                title: { display: true, text: 'Chamados por Setor' }
+                title: { display: true, text: 'Chamados por Classificação' }
             }
         }
     });
