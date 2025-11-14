@@ -8,7 +8,7 @@ const { ref, uploadBytes, getDownloadURL } = storageFunctions;
 const formAberturaChamado = document.getElementById('formAberturaChamado');
 const successMessage = document.getElementById('successMessage');
 const newProtocolNumber = document.getElementById('newProtocolNumber');
-const errorMessageEl = document.getElementById('errorMessage');
+const topMessageEl = document.getElementById('topMessage');
 
 /**
  * Faz upload de um arquivo para o Firebase Storage.
@@ -47,14 +47,14 @@ formAberturaChamado.addEventListener('submit', async (e) => {
 
     // Validação simples
     if (!nome || !setor || !problema || !urgencia) {
-        showMessage(errorMessageEl, 'Por favor, preencha todos os campos obrigatórios.', 'error');
+        showMessage(topMessageEl, 'Por favor, preencha todos os campos obrigatórios.', 'error');
         return;
     }
 
     const btnSubmit = formAberturaChamado.querySelector('button[type="submit"]');
     btnSubmit.disabled = true;
     btnSubmit.textContent = 'Enviando...';
-    errorMessageEl.style.display = 'none';
+    topMessageEl.style.display = 'none';
 
     try {
         const protocolo = gerarProtocolo();
@@ -71,11 +71,7 @@ formAberturaChamado.addEventListener('submit', async (e) => {
             resolucao: null,
             pecaSolicitada: null,
             anexoUrl: anexoUrlExterno || null, // Salva o link externo imediatamente
-            historico: [{
-                status: 'pendente',
-                data: serverTimestamp(),
-                responsavel: 'Sistema'
-            }]
+            historico: [] // CORREÇÃO: Inicializa o histórico como um array vazio
         });
 
         // 2. Faz o upload do anexo para o Firebase Storage (se houver)
@@ -95,16 +91,17 @@ formAberturaChamado.addEventListener('submit', async (e) => {
 
         console.log("Chamado aberto com sucesso! ID:", docRef.id);
 
-        // Exibe a mensagem de sucesso com o protocolo
-        formAberturaChamado.style.display = 'none';
-        newProtocolNumber.textContent = protocolo;
-        document.getElementById('linkConsulta').href = `consulta.html?protocolo=${protocolo}`;
-        successMessage.style.display = 'block';
+        // Limpa o formulário e exibe a mensagem de sucesso no topo
+        formAberturaChamado.reset();
+        const linkConsulta = `<a href="consulta.html?protocolo=${protocolo}" target="_blank">Clique aqui para consultar.</a>`;
+        showMessage(topMessageEl, `✅ Chamado aberto com sucesso! Seu protocolo é <strong>${protocolo}</strong>. ${linkConsulta}`, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para o topo para ver a mensagem
 
     } catch (error) {
         console.error("Erro ao abrir chamado:", error);
-        showMessage(errorMessageEl, `Ocorreu um erro ao abrir seu chamado. Tente novamente. Detalhes: ${error.message}`, 'error');
+        showMessage(topMessageEl, `Ocorreu um erro ao abrir seu chamado. Tente novamente. Detalhes: ${error.message}`, 'error');
         
+    } finally {
         btnSubmit.disabled = false;
         btnSubmit.textContent = 'Abrir Chamado';
     }
