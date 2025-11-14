@@ -17,7 +17,7 @@
             <p>Descreva seu problema para que possamos ajudar o mais rápido possível.</p>
         </div>
         
-        <form id="formChamado">
+        <form id="formAberturaChamado">
             <div class="form-group">
                 <label for="nome">Seu Nome Completo:</label>
                 <div class="input-wrapper">
@@ -45,17 +45,17 @@
 
             <div class="form-group">
                 <label for="urgencia">Nível de Urgência:</label>
-                <div class="urgency-options-container" id="urgencia">
+                <div class="urgency-options-container">
                     <label class="urgency-option urgencia-baixa">
-                        <input type="radio" name="urgencia" value="Baixa" checked>
+                        <input type="radio" name="urgencia" value="baixa" checked>
                         <span>Baixa</span>
                     </label>
                     <label class="urgency-option urgencia-media">
-                        <input type="radio" name="urgencia" value="Média">
+                        <input type="radio" name="urgencia" value="media">
                         <span>Média</span>
                     </label>
                     <label class="urgency-option urgencia-alta">
-                        <input type="radio" name="urgencia" value="Alta">
+                        <input type="radio" name="urgencia" value="alta">
                         <span>Alta</span>
                     </label>
                 </div>
@@ -82,16 +82,25 @@
                 <input type="url" id="anexoUrl" placeholder="https://drive.google.com/..." class="input-file">
             </div>
 
-            <button type="submit" id="btnSubmit">Abrir Chamado</button>
+            <button type="submit">Abrir Chamado</button>
         </form>
 
-        <div id="mensagem" class="message" style="display: none;"></div>
+        <!-- Mensagem de sucesso (inicialmente oculta) -->
+        <div id="successMessage" class="success-container" style="display: none;">
+            <h2>✅ Chamado Aberto com Sucesso!</h2>
+            <p>Seu atendimento foi registrado. Anote o número do seu protocolo para consultas futuras:</p>
+            <div class="protocol-display" id="newProtocolNumber"></div>
+            <p>Você pode <a id="linkConsulta" href="consulta.html">consultar o andamento aqui</a>.</p>
+            <button onclick="window.location.reload()" class="btn-secondary">Abrir Novo Chamado</button>
+        </div>
+
+        <div id="errorMessage" class="message" style="display: none;"></div>
     </div>
 
     <div class="footer">
         <p>&copy; 2025 Rede DMI | Sistema de Chamados T.I. | <a href="consulta.html">Consultar Chamado</a> | <a href="login.html" target="_blank">Acesso Admin</a></p>
     </div>
 
-    <script type="module" src="js/index.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,13 +1,20 @@
 import { db, dbFunctions } from './firebase-init.js';
+import { showMessage } from './utils.js';
 const { collection, addDoc, serverTimestamp } = dbFunctions;
 
 // Elementos do formulário
 const formChamado = document.getElementById('formChamado');
 const mensagemEl = document.getElementById('mensagem');
 const btnSubmit = document.getElementById('btnSubmit');
-const anexoInput = document.getElementById('anexo');
+const anexoInput = document.getElementById('anexo'); // Assumindo que este é o input de arquivo
 const anexoUrlInput = document.getElementById('anexoUrl');
+
+// Constantes
 const LIMITE_TAMANHO_ANEXO = 750 * 1024; // 750KB
+const STATUS_PENDENTE = 'Pendente';
+const BTN_TEXT_ENVIANDO = 'Enviando...';
+const BTN_TEXT_PADRAO = 'Abrir Chamado';
+const COLECAO_CHAMADOS = 'chamados';
 
 /**
  * Converte um arquivo de imagem para uma string Base64 (Data URL).
@@ -30,19 +37,24 @@ function converterImagemParaBase64(file) {
     });
 }
 
-
-import { showMessage } from './utils.js';
-
 formChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     // Desabilita o botão para evitar múltiplos envios
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Enviando...';
+    btnSubmit.textContent = BTN_TEXT_ENVIANDO;
 
-    const nome = document.getElementById('nome').value;
-    const setor = document.getElementById('setor').value;
-    const problema = document.getElementById('problema').value;
+    // Validação de campos
+    const nome = document.getElementById('nome').value.trim();
+    const setor = document.getElementById('setor').value.trim();
+    const problema = document.getElementById('problema').value.trim();
+    if (!nome || !setor || !problema) {
+        showMessage(mensagemEl, '❌ Por favor, preencha todos os campos obrigatórios (Nome, Setor e Problema).', 'error');
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = BTN_TEXT_PADRAO;
+        return;
+    }
+
     const urgencia = document.querySelector('input[name="urgencia"]:checked').value;
     const anexoFile = anexoInput.files[0];
     const anexoUrl = anexoUrlInput.value.trim();
@@ -64,21 +76,20 @@ formChamado.addEventListener('submit', async (e) => {
         const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         const protocolo = `CH-${ano}-${randomId}`;
         
-        await addDoc(collection(db, "chamados"), {
+        await addDoc(collection(db, COLECAO_CHAMADOS), {
             protocolo,
             nome,
             setor,
             problema,
             urgencia,
-            status: 'Pendente',
+            status: STATUS_PENDENTE,
             dataAbertura: serverTimestamp(),
-            anexoBase64: anexoBase64 || null, // Salva a string Base64
             historico: [{ // Inicia o histórico na criação do chamado
-                status: 'Pendente',
+                status: STATUS_PENDENTE,
                 data: serverTimestamp(),
                 responsavel: 'Sistema'
             }],
-            anexoBase64: anexoBase64 || null, 
+            anexoBase64: anexoBase64 || null,
             anexoInfo: anexoInfo || null,      // Salva nome e tipo do arquivo
             anexoUrl: anexoUrl || null         // Salva a URL do anexo grande
         });
@@ -92,6 +103,6 @@ formChamado.addEventListener('submit', async (e) => {
     } finally {
         // Reabilita o botão
         btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Abrir Chamado';
+        btnSubmit.textContent = BTN_TEXT_PADRAO;
     }
 });

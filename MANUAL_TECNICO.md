@@ -56,10 +56,10 @@ Todos os dados são armazenados na coleção `chamados`. Cada documento nesta co
 *   `status` (string): Status atual do chamado ('pendente', 'em-andamento', 'resolvido', 'aguardando-peça').
 *   `protocolo` (string): Identificador único do chamado (ex: `CH-2025-ABCDEF`).
 *   `anexoUrl` (string, opcional): URL pública para o arquivo anexado no Firebase Storage.
-*   `resolucao` (object, opcional): Contém detalhes do fechamento do chamado.
+*   `resolucao` (object | null, opcional): Contém detalhes do fechamento do chamado. É `null` na criação.
     *   `descricao` (string): Descrição da solução aplicada.
     *   `data` (timestamp): Data da resolução.
-*   `pecaSolicitada` (object, opcional): Contém detalhes da peça pendente.
+*   `pecaSolicitada` (object | null, opcional): Contém detalhes da peça pendente. É `null` na criação.
     *   `descricao` (string): Qual peça foi solicitada.
     *   `data` (timestamp): Data da solicitação.
 
