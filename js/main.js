@@ -30,7 +30,7 @@ async function uploadAnexo(file, docId) {
  * @returns {string} O protocolo gerado.
  */
 function gerarProtocolo() {
-    const ano = new Date().getFullYear().toString().slice(-2); // Pega os 2 últimos dígitos do ano
+    const ano = new Date().getFullYear(); // Usa o ano completo (4 dígitos)
     const randomChars = Math.random().toString(36).substring(2, 7).toUpperCase();
     return `CH-${ano}-${randomChars}`;
 }

@@ -69,8 +69,8 @@ onAuthStateChanged(auth, (user) => {
 
 // Função para carregar e exibir os chamados em tempo real
 function carregarChamados() {
-    // CORREÇÃO 1: Removido o orderBy para evitar que chamados sem 'dataAbertura' quebrem a query.
-    const q = query(collection(db, "chamados"));
+    // Reintroduzida a ordenação por data para exibir os chamados mais recentes primeiro.
+    const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
     onSnapshot(q, (querySnapshot) => {
         const isUpdate = !isFirstLoad; // Considera uma atualização se não for o primeiro carregamento
         loader.style.display = 'none';
@@ -172,7 +172,7 @@ function carregarChamados() {
             card.innerHTML = `
                 <div class="card-header">
                     <div class="solicitante-info">
-                        <span class="protocolo-info">${chamado.protocolo ? `#${chamado.protocolo}` : 'S/P'}</span>
+                        <span class="protocolo-info">${chamado.protocolo || 'S/P'}</span>
                         <span class="solicitante-nome">${chamado.nome}</span>
                         <span class="solicitante-setor">Setor: ${chamado.setor}</span>
                     </div>
@@ -245,6 +245,19 @@ function carregarChamados() {
             listaResolvidosEl.innerHTML = `<p class="empty-category-message">Nenhum chamado foi resolvido ainda.</p>`;
         } else {
             listaResolvidosEl.innerHTML = '<h4>Concluídos</h4>'; // Adiciona o título da seção
+
+            // ORDENAÇÃO: Ordena os chamados resolvidos pela data de resolução (mais recentes primeiro)
+            chamados.resolvidos.sort((cardA, cardB) => {
+                const chamadoA = JSON.parse(cardA.dataset.chamado);
+                const chamadoB = JSON.parse(cardB.dataset.chamado);
+
+                // Usa a data da resolução para ordenar. Se não houver data, considera como mais antigo.
+                const dataResolucaoA = chamadoA.resolucao?.data?.seconds || 0;
+                const dataResolucaoB = chamadoB.resolucao?.data?.seconds || 0;
+
+                return dataResolucaoB - dataResolucaoA;
+            });
+
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
 
@@ -532,7 +545,7 @@ btnStatusCancelar.addEventListener('click', () => {
 function validarFormStatus() {
     // CORREÇÃO: Garante que os campos de texto sejam exibidos ou ocultados
     // de acordo com o status selecionado ANTES de validar.
-    const status = selectStatus.value;
+    const status = selectStatus.value.toLowerCase(); // Normaliza para minúsculas
     if (status === 'resolvido') {
         campoResolucao.style.display = 'block';
         campoPeca.style.display = 'none';

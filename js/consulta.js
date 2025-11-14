@@ -36,7 +36,7 @@ async function consultarChamado(protocolo) {
 
         // LÓGICA PARA EXIBIR A RESOLUÇÃO
         let resolucaoHtml = '';
-        if (chamado.status === 'resolvido' && chamado.resolucao?.descricao) {
+        if ((chamado.status || '').toLowerCase() === 'resolvido' && chamado.resolucao?.descricao) {
             const dataResolucao = chamado.resolucao.data ? chamado.resolucao.data.toDate().toLocaleString('pt-BR') : 'Data não registrada';
             resolucaoHtml = `
                 <div class="detalhe-chamado status-resolvido">
