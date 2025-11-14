@@ -120,13 +120,15 @@ function carregarChamados() {
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
             // CORREÇÃO 2: Normaliza o status para garantir a correspondência correta.
-            const status = (chamado.status || 'pendente')
+            const status = (chamado.status || 'Pendente')
                 .trim()
                 .toLowerCase()
                 .replace('ç', 'c')
                 .replace('í', 'i')
                 .replace('ê', 'e');
             const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+            // Garante que o status seja exibido com a primeira letra maiúscula
+            const displayStatus = (chamado.status || 'Pendente').charAt(0).toUpperCase() + (chamado.status || 'Pendente').slice(1);
 
             // Adiciona a validação para o campo de resolução ser obrigatório
             if (status === 'resolvido' && !chamado.resolucao) {
@@ -178,7 +180,7 @@ function carregarChamados() {
                     </div>
                     <div class="status-container" style="display: flex; align-items: center; gap: 10px;">
                         ${urgenciaHtml}
-                        <span class="status-tag ${statusClass}">${chamado.status || 'Pendente'}</span>
+                        <span class="status-tag ${statusClass}">${displayStatus}</span>
                     </div>
                 </div>
                 <div class="problema-resumo">
@@ -369,6 +371,74 @@ function atualizarGraficos(chamados) {
     });
 }
 
+function criarCardChamado(chamado) {
+    const id = chamado.id;
+    const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
+    const status = (chamado.status || 'Pendente').trim().toLowerCase();
+    const statusClass = status.replace(/\s+/g, '-');
+    const displayStatus = (chamado.status || 'Pendente').charAt(0).toUpperCase() + (chamado.status || 'Pendente').slice(1);
+
+    if (status === 'resolvido' && !chamado.resolucao) {
+        chamado.resolucao = "Resolução não informada.";
+    }
+
+    const resolucaoHtml = status === 'resolvido' && chamado.resolucao?.descricao
+        ? `<div class="resolucao-info">
+             <strong>Solução:</strong> ${chamado.resolucao.descricao}
+             <span class="resolucao-data">Resolvido em: ${chamado.resolucao.data ? chamado.resolucao.data.toDate().toLocaleString('pt-BR') : 'Data não registrada'}</span>
+           </div>`
+        : '';
+
+    const pecaHtml = status === 'aguardando-peça' && chamado.pecaAguardando
+        ? `<div class="peca-info">
+             <strong>Aguardando Peça:</strong> ${chamado.pecaAguardando}
+           </div>`
+        : '';
+
+    const urgenciaClass = chamado.urgencia ? `urgencia-${chamado.urgencia.toLowerCase()}` : '';
+    const urgenciaHtml = chamado.urgencia
+        ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
+        : '';
+
+    let anexoHtml = '';
+    if (chamado.anexoUrl) {
+        anexoHtml = `<div class="anexo-info">
+             <a href="${chamado.anexoUrl}" class="anexo-link" target="_blank" rel="noopener noreferrer">Ver Anexo</a>
+           </div>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
+    card.dataset.id = id;
+    card.dataset.chamado = JSON.stringify(chamado);
+
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="solicitante-info">
+                <span class="protocolo-info">${chamado.protocolo || 'S/P'}</span>
+                <span class="solicitante-nome">${chamado.nome}</span>
+                <span class="solicitante-setor">Setor: ${chamado.setor}</span>
+            </div>
+            <div class="status-container" style="display: flex; align-items: center; gap: 10px;">
+                ${urgenciaHtml}
+                <span class="status-tag ${statusClass}">${displayStatus}</span>
+            </div>
+        </div>
+        <div class="problema-resumo">
+            <p>${chamado.problema}</p>
+        </div>
+        ${anexoHtml}
+        ${pecaHtml}
+        ${resolucaoHtml}
+        <div class="card-footer">
+            <div class="data-abertura">Aberto em: ${dataAbertura}</div>
+            <button class="btn-status" data-id="${id}">Alterar</button>
+            <button class="btn-remover" data-id="${id}">Remover</button>
+        </div>
+    `;
+    return card;
+}
+
 // --- MELHORIA 2: Para de piscar o título quando o usuário volta para a aba ---
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
@@ -498,7 +568,7 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         const card = target.closest('.chamado-card');
         chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
         
-        selectStatus.value = chamadoAtualParaStatus.status || 'pendente';
+        selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
         const statusNormalizado = (chamadoAtualParaStatus.status || '').toLowerCase();
         textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || '';
         campoResolucao.style.display = statusNormalizado === 'resolvido' ? 'block' : 'none';

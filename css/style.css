@@ -1,7 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    /* Paleta de Cores (Tokyo Night) */
+    /* Paleta de Cores Padrão (Light) */
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --background-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --surface-hover: #f1f3f5;
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --border-color: #dee2e6;
+
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+}
+
+/* Tema Dark (Tokyo Night) */
+body.dark-theme {
     --primary-color: #7aa2f7;
     --success-color: #9ece6a;
     --danger-color: #f7768e;
@@ -12,12 +33,9 @@
     --text-primary: #c0caf5;
     --text-secondary: #a9b1d6;
     --border-color: #414868;
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-    --border-radius-sm: 4px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
 }
 
 body {
@@ -965,4 +983,77 @@ button:disabled {
         grid-template-columns: 1fr; /* Coluna única em telas pequenas */
         gap: 1rem;
     }
+}
+
+/* Melhoria de UX: Feedback visual para input de arquivo */
+.input-file-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-file-label {
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    width: 100%;
+    text-align: left;
+    color: var(--text-secondary);
+}
+
+.input-file-label:hover {
+    border-color: var(--primary-color);
+}
+
+/* ============================================= */
+/* == ESTILOS PARA O SELETOR DE TEMA (NOVO) == */
+/* ============================================= */
+.theme-switcher {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.theme-switcher-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.theme-switcher-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+    color: var(--primary-color);
+}
+
+.theme-switcher-btn .icon-sun,
+.theme-switcher-btn .icon-moon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Oculta o ícone do sol no tema dark */
+.dark-theme .theme-switcher-btn .icon-sun {
+    display: none;
+}
+
+/* Oculta o ícone da lua no tema light (padrão) */
+.theme-switcher-btn .icon-sun {
+    display: none;
+}
+.dark-theme .theme-switcher-btn .icon-moon {
+    display: block;
 }

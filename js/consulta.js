@@ -32,7 +32,8 @@ async function consultarChamado(protocolo) {
 
         const chamado = querySnapshot.docs[0].data();
         const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
-        const statusClass = (chamado.status || 'pendente').toLowerCase().replace(/\s+/g, '-');
+        const statusClass = (chamado.status || 'Pendente').toLowerCase().replace(/\s+/g, '-');
+        const displayStatus = (chamado.status || 'Pendente').charAt(0).toUpperCase() + (chamado.status || 'Pendente').slice(1);
 
         // LÓGICA PARA EXIBIR O HISTÓRICO
         let historicoHtml = '';
@@ -76,7 +77,7 @@ async function consultarChamado(protocolo) {
                     </div>
                     <div class="status-info">
                         <span>Status Atual</span>
-                        <span class="status-tag ${statusClass}">${chamado.status}</span>
+                        <span class="status-tag ${statusClass}">${displayStatus}</span>
                     </div>
                 </div>
                 <div class="card-consulta-body">

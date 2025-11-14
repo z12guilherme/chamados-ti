@@ -9,6 +9,8 @@ const formAberturaChamado = document.getElementById('formAberturaChamado');
 const successMessage = document.getElementById('successMessage');
 const newProtocolNumber = document.getElementById('newProtocolNumber');
 const topMessageEl = document.getElementById('topMessage');
+const anexoInput = document.getElementById('anexo');
+const anexoLabel = document.getElementById('anexoLabel');
 
 /**
  * Faz upload de um arquivo para o Firebase Storage.
@@ -34,6 +36,11 @@ function gerarProtocolo() {
     const randomChars = Math.random().toString(36).substring(2, 7).toUpperCase();
     return `CH-${ano}-${randomChars}`;
 }
+
+anexoInput.addEventListener('change', () => {
+    const fileName = anexoInput.files.length > 0 ? anexoInput.files[0].name : 'Clique para selecionar um arquivo...';
+    anexoLabel.textContent = fileName;
+});
 
 formAberturaChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
