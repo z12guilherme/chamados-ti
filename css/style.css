@@ -284,7 +284,7 @@ button:disabled {
 }
 
 .chamado-card.pendente {
-    border-left: 5px solid var(--primary-color);
+    border-left: 5px solid var(--danger-color);
 }
 
 .chamado-card.em-andamento {

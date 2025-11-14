@@ -125,15 +125,8 @@ function carregarChamados() {
                 .toLowerCase()
                 .replace('ç', 'c')
                 .replace('í', 'i')
-                .replace('ê', 'e'); // status sempre em minúsculas para lógica
-            let statusClass = status.toLowerCase().replace(/\s+/g, '-');
-
-            // INVERSÃO DE CORES: Troca as classes para inverter as cores no CSS
-            if (statusClass === 'pendente') {
-                statusClass = 'urgencia-alta'; // Usa a classe vermelha para pendentes
-            } else if (statusClass === 'resolvido') {
-                statusClass = 'resolvido'; // Mantém a classe verde para resolvidos
-            }
+                .replace('ê', 'e');
+            const statusClass = status.toLowerCase().replace(/\s+/g, '-');
 
             // Adiciona a validação para o campo de resolução ser obrigatório
             if (status === 'resolvido' && !chamado.resolucao) {
