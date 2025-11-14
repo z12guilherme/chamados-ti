@@ -69,9 +69,9 @@ onAuthStateChanged(auth, (user) => {
 
 // Função para carregar e exibir os chamados em tempo real
 function carregarChamados() {
-    const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
-
-    onSnapshot(q, (querySnapshot) => {        
+    // CORREÇÃO 1: Removido o orderBy para evitar que chamados sem 'dataAbertura' quebrem a query.
+    const q = query(collection(db, "chamados"));
+    onSnapshot(q, (querySnapshot) => {
         const isUpdate = !isFirstLoad; // Considera uma atualização se não for o primeiro carregamento
         loader.style.display = 'none';
 
@@ -81,6 +81,7 @@ function carregarChamados() {
         listaAguardandoPecaEl.innerHTML = '';
         listaResolvidosEl.innerHTML = '';
 
+        todosOsChamados = []; // CORREÇÃO: Limpa a lista geral para reconstruí-la
         const chamados = {
             pendentes: [],
             aguardandoPeca: [],
@@ -114,25 +115,33 @@ function carregarChamados() {
         querySnapshot.forEach((documento) => {
             const chamado = documento.data();
             const id = documento.id;
-            chamado.id = id; // Adiciona o ID ao objeto do chamado
-            // Adiciona o chamado completo à lista de exportação
+            chamado.id = id;
+            todosOsChamados.push(chamado); // Adiciona o chamado à lista geral
 
             const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
-            const status = chamado.status || 'Pendente';
+            // CORREÇÃO 2: Normaliza o status para garantir a correspondência correta.
+            const status = (chamado.status || 'pendente')
+                .trim()
+                .toLowerCase()
+                .replace('ç', 'c')
+                .replace('í', 'i')
+                .replace('ê', 'e');
             const statusClass = status.toLowerCase().replace(/\s+/g, '-');
 
             // Adiciona a validação para o campo de resolução ser obrigatório
-            if (status === 'Resolvido' && !chamado.resolucao) {
+            if (status === 'resolvido' && !chamado.resolucao) {
                 chamado.resolucao = "Resolução não informada.";
             }
 
-            const resolucaoHtml = chamado.status === 'Resolvido' && chamado.resolucao
+            // CORREÇÃO: Exibe a descrição da resolução e a data
+            const resolucaoHtml = chamado.status === 'resolvido' && chamado.resolucao?.descricao
                 ? `<div class="resolucao-info">
-                     <strong>Solução:</strong> ${chamado.resolucao}
+                     <strong>Solução:</strong> ${chamado.resolucao.descricao}
+                     <span class="resolucao-data">Resolvido em: ${chamado.resolucao.data ? chamado.resolucao.data.toDate().toLocaleString('pt-BR') : 'Data não registrada'}</span>
                    </div>`
                 : '';
 
-            const pecaHtml = chamado.status === 'Aguardando Peça' && chamado.pecaAguardando
+            const pecaHtml = chamado.status === 'aguardando-peça' && chamado.pecaAguardando
                 ? `<div class="peca-info">
                      <strong>Aguardando Peça:</strong> ${chamado.pecaAguardando}
                    </div>`
@@ -159,7 +168,6 @@ function carregarChamados() {
             card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
             card.dataset.id = id;
             card.dataset.chamado = JSON.stringify(chamado);
-            todosOsChamados.push(chamado);
             
             card.innerHTML = `
                 <div class="card-header">
@@ -189,38 +197,48 @@ function carregarChamados() {
             `;
 
             // Separa os chamados por categoria
-            if (status === 'Pendente') {
+            if (status === 'pendente') {
                 chamados.pendentes.push(card);
-            } else if (status === 'Em Andamento') {
+            } else if (status === 'em-andamento') {
                 chamados.emAndamento.push(card);
-            } else if (status === 'Aguardando Peça') {
+            } else if (status === 'aguardando-peça') {
                 chamados.aguardandoPeca.push(card);
-            } else if (status === 'Resolvido') {
+            } else if (status === 'resolvido') {
                 chamados.resolvidos.push(card);
             }
         });
 
         // Exibe os chamados ou a mensagem de "nenhum chamado"
+        const chamadosAtivosContainer = document.getElementById('chamados-ativos');
         if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0 && chamados.emAndamento.length === 0) {
-            document.getElementById('chamados-ativos').innerHTML += `<p class="empty-category-message">Nenhum chamado pendente.</p>`;
+            chamadosAtivosContainer.innerHTML = `<p class="empty-category-message">Nenhum chamado ativo no momento.</p>`;
         } else {
+            // CORREÇÃO: Limpa a mensagem de "nenhum chamado" se houver chamados, mas preserva os contêineres das listas.
+            if (chamadosAtivosContainer.querySelector('.empty-category-message')) {
+                chamadosAtivosContainer.innerHTML = '';
+                chamadosAtivosContainer.appendChild(listaPendentesEl);
+                chamadosAtivosContainer.appendChild(listaEmAndamentoEl);
+                chamadosAtivosContainer.appendChild(listaAguardandoPecaEl);
+            }
+
             if (chamados.pendentes.length > 0) {
-                listaPendentesEl.innerHTML += '<h4>Pendentes</h4>';
+                listaPendentesEl.innerHTML = '<h4>Pendentes</h4>';
                 chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
             }
             if (chamados.emAndamento.length > 0) {
-                listaEmAndamentoEl.innerHTML += '<h4>Em Andamento</h4>';
+                listaEmAndamentoEl.innerHTML = '<h4>Em Andamento</h4>';
                 chamados.emAndamento.forEach(card => listaEmAndamentoEl.appendChild(card));
             }
             if (chamados.aguardandoPeca.length > 0) {
-                listaAguardandoPecaEl.innerHTML += '<h4>Aguardando Peça</h4>';
+                listaAguardandoPecaEl.innerHTML = '<h4>Aguardando Peça</h4>';
                 chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
             }
         }
-
+        
         if (chamados.resolvidos.length === 0) {
             listaResolvidosEl.innerHTML = `<p class="empty-category-message">Nenhum chamado foi resolvido ainda.</p>`;
         } else {
+            listaResolvidosEl.innerHTML = '<h4>Concluídos</h4>'; // Adiciona o título da seção
             chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
         }
 
@@ -461,11 +479,11 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         const card = target.closest('.chamado-card');
         chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
         
-        selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
-        textoResolucao.value = chamadoAtualParaStatus.resolucao || '';
-        campoResolucao.style.display = chamadoAtualParaStatus.status === 'Resolvido' ? 'block' : 'none';
+        selectStatus.value = chamadoAtualParaStatus.status || 'pendente';
+        textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || ''; // CORREÇÃO: Pega a descrição do objeto
+        campoResolucao.style.display = chamadoAtualParaStatus.status === 'resolvido' ? 'block' : 'none';
         textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
-        campoPeca.style.display = chamadoAtualParaStatus.status === 'Aguardando Peça' ? 'block' : 'none';
+        campoPeca.style.display = chamadoAtualParaStatus.status === 'aguardando-peça' ? 'block' : 'none';
         validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
     }
@@ -510,9 +528,9 @@ function validarFormStatus() {
     const resolucaoTexto = textoResolucao.value.trim();
     const pecaTexto = textoPeca.value.trim();
 
-    if (statusSelecionado === 'Resolvido' && resolucaoTexto === '') {
+    if (statusSelecionado === 'resolvido' && resolucaoTexto === '') {
         btnSalvarStatus.disabled = true;
-    } else if (statusSelecionado === 'Aguardando Peça' && pecaTexto === '') {
+    } else if (statusSelecionado === 'aguardando-peça' && pecaTexto === '') {
         btnSalvarStatus.disabled = true;
     } else {
         btnSalvarStatus.disabled = false;
@@ -521,10 +539,10 @@ function validarFormStatus() {
 
 selectStatus.addEventListener('change', () => {
     const status = selectStatus.value;
-    if (status === 'Resolvido') {
+    if (status === 'resolvido') {
         campoResolucao.style.display = 'block';
         campoPeca.style.display = 'none';
-    } else if (status === 'Aguardando Peça') {
+    } else if (status === 'aguardando-peça') {
         campoResolucao.style.display = 'none';
         campoPeca.style.display = 'block';
     } else {
@@ -552,19 +570,23 @@ formStatus.addEventListener('submit', async (e) => {
             })
         };
 
-        if (novoStatus === 'Resolvido') {
+        if (novoStatus === 'resolvido') {
             if (textoResolucao.value.trim() === '') {
                 alert('Por favor, descreva como o problema foi resolvido.');
                 return;
             }
-            dadosParaAtualizar.resolucao = textoResolucao.value.trim();
-        } else if (novoStatus === 'Aguardando Peça') {
+            // CORREÇÃO: Salva a resolução como um objeto
+            dadosParaAtualizar.resolucao = {
+                descricao: textoResolucao.value.trim(),
+                data: serverTimestamp()
+            };
+        } else if (novoStatus === 'aguardando-peça') {
             if (textoPeca.value.trim() === '') {
                 alert('Por favor, informe qual peça está sendo aguardada.');
                 return;
             }
             dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
-            dadosParaAtualizar.resolucao = ''; // Limpa a resolução caso estivesse preenchida
+            dadosParaAtualizar.resolucao = null; // CORREÇÃO: Limpa a resolução para null
         }
 
         await updateDoc(chamadoRef, dadosParaAtualizar);
