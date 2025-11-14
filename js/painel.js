@@ -1,7 +1,7 @@
 // js/painel.js
 import { db, auth, dbFunctions, authFunctions } from './firebase-init.js';
 
-const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDocs, limit, startAfter, where, serverTimestamp, arrayUnion } = dbFunctions;
+const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDocs, limit, startAfter, where, serverTimestamp, arrayUnion, getDoc } = dbFunctions;
 const { onAuthStateChanged, signOut } = authFunctions;
 
 const btnLogout = document.getElementById('btnLogout');
@@ -51,7 +51,7 @@ if ('Notification' in window && Notification.permission !== 'granted') {
 let isFirstLoad = true; // Flag para evitar notificação no primeiro carregamento
 
 // --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
-const audio = new Audio('../assets/sounds/notification.mp3');
+const audio = new Audio('assets/sounds/notification.mp3');
 const originalTitle = document.title;
 let intervalId = null; // Controla o piscar do título
 
@@ -134,7 +134,7 @@ function carregarChamados() {
             }
 
             // CORREÇÃO: Exibe a descrição da resolução e a data
-            const resolucaoHtml = chamado.status === 'resolvido' && chamado.resolucao?.descricao
+            const resolucaoHtml = status === 'resolvido' && chamado.resolucao?.descricao
                 ? `<div class="resolucao-info">
                      <strong>Solução:</strong> ${chamado.resolucao.descricao}
                      <span class="resolucao-data">Resolvido em: ${chamado.resolucao.data ? chamado.resolucao.data.toDate().toLocaleString('pt-BR') : 'Data não registrada'}</span>
@@ -216,12 +216,13 @@ function carregarChamados() {
             // CORREÇÃO: Limpa a mensagem de "nenhum chamado" se houver chamados, mas preserva os contêineres das listas.
             if (chamadosAtivosContainer.querySelector('.empty-category-message')) {
                 chamadosAtivosContainer.innerHTML = '';
-                chamadosAtivosContainer.appendChild(listaPendentesEl);
-                chamadosAtivosContainer.appendChild(listaEmAndamentoEl);
-                chamadosAtivosContainer.appendChild(listaAguardandoPecaEl);
             }
 
             if (chamados.pendentes.length > 0) {
+                // CORREÇÃO: Garante que o contêiner de ativos seja visível e adicione a lista a ele.
+                if (!document.getElementById('listaPendentes').parentNode) {
+                    chamadosAtivosContainer.appendChild(listaPendentesEl);
+                }
                 listaPendentesEl.innerHTML = '<h4>Pendentes</h4>';
                 chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
             }
@@ -524,6 +525,19 @@ btnStatusCancelar.addEventListener('click', () => {
     chamadoAtualParaStatus = null;
 });
 function validarFormStatus() {
+    // CORREÇÃO: Garante que os campos de texto sejam exibidos ou ocultados
+    // de acordo com o status selecionado ANTES de validar.
+    const status = selectStatus.value;
+    if (status === 'resolvido') {
+        campoResolucao.style.display = 'block';
+        campoPeca.style.display = 'none';
+    } else if (status === 'aguardando-peça') {
+        campoResolucao.style.display = 'none';
+        campoPeca.style.display = 'block';
+    } else {
+        campoResolucao.style.display = 'none';
+        campoPeca.style.display = 'none';
+    }
     const statusSelecionado = selectStatus.value;
     const resolucaoTexto = textoResolucao.value.trim();
     const pecaTexto = textoPeca.value.trim();
@@ -538,36 +552,37 @@ function validarFormStatus() {
 }
 
 selectStatus.addEventListener('change', () => {
-    const status = selectStatus.value;
-    if (status === 'resolvido') {
-        campoResolucao.style.display = 'block';
-        campoPeca.style.display = 'none';
-    } else if (status === 'aguardando-peça') {
-        campoResolucao.style.display = 'none';
-        campoPeca.style.display = 'block';
-    } else {
-        campoResolucao.style.display = 'none';
-        campoPeca.style.display = 'none';
-    }
     validarFormStatus();
 });
 
+textoResolucao.addEventListener('input', validarFormStatus);
 textoResolucao.addEventListener('input', validarFormStatus);
 textoPeca.addEventListener('input', validarFormStatus);
 
 
 formStatus.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (chamadoIdParaAcao) {
+    // CORREÇÃO: Usa o ID do 'chamadoAtualParaStatus' que já está em memória,
+    // em vez de depender de uma variável que pode não estar definida.
+    if (chamadoAtualParaStatus && chamadoAtualParaStatus.id) {
         const novoStatus = selectStatus.value;
-        const chamadoRef = doc(db, "chamados", chamadoIdParaAcao);
+        const chamadoId = chamadoAtualParaStatus.id;
+        const chamadoRef = doc(db, "chamados", chamadoId);
+
+        // CORREÇÃO: Para contornar a limitação do serverTimestamp com arrayUnion,
+        // lemos o documento, atualizamos o array em memória e salvamos de volta.
+        const docSnap = await getDoc(chamadoRef);
+        const chamadoAtual = docSnap.data();
+        const novoHistorico = chamadoAtual.historico || [];
+        novoHistorico.push({
+            status: novoStatus,
+            data: new Date(), // Usamos a data local do cliente. serverTimestamp() não é suportado aqui.
+            responsavel: auth.currentUser.email
+        });
+
         const dadosParaAtualizar = {
             status: novoStatus,
-            historico: arrayUnion({ // Adiciona um novo evento ao array de histórico
-                status: novoStatus,
-                data: serverTimestamp(),
-                responsavel: auth.currentUser.email // Registra quem alterou
-            })
+            historico: novoHistorico
         };
 
         if (novoStatus === 'resolvido') {
@@ -591,6 +606,6 @@ formStatus.addEventListener('submit', async (e) => {
 
         await updateDoc(chamadoRef, dadosParaAtualizar);
         modalStatus.style.display = 'none';
-        chamadoIdParaAcao = null;
+        chamadoAtualParaStatus = null;
     }
 });
