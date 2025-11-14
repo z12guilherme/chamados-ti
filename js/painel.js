@@ -125,8 +125,15 @@ function carregarChamados() {
                 .toLowerCase()
                 .replace('ç', 'c')
                 .replace('í', 'i')
-                .replace('ê', 'e');
-            const statusClass = status.toLowerCase().replace(/\s+/g, '-');
+                .replace('ê', 'e'); // status sempre em minúsculas para lógica
+            let statusClass = status.toLowerCase().replace(/\s+/g, '-');
+
+            // INVERSÃO DE CORES: Troca as classes para inverter as cores no CSS
+            if (statusClass === 'pendente') {
+                statusClass = 'urgencia-alta'; // Usa a classe vermelha para pendentes
+            } else if (statusClass === 'resolvido') {
+                statusClass = 'resolvido'; // Mantém a classe verde para resolvidos
+            }
 
             // Adiciona a validação para o campo de resolução ser obrigatório
             if (status === 'resolvido' && !chamado.resolucao) {
@@ -165,7 +172,7 @@ function carregarChamados() {
             }
 
             const card = document.createElement('div');
-            card.className = `chamado-card ${statusClass.replace('í', 'i').replace('ç', 'c').replace('ê', 'e')}`;
+            card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
             card.dataset.id = id;
             card.dataset.chamado = JSON.stringify(chamado);
             
@@ -178,7 +185,7 @@ function carregarChamados() {
                     </div>
                     <div class="status-container" style="display: flex; align-items: center; gap: 10px;">
                         ${urgenciaHtml}
-                        <span class="status-tag">${chamado.status}</span>
+                        <span class="status-tag ${statusClass}">${chamado.status || 'Pendente'}</span>
                     </div>
                 </div>
                 <div class="problema-resumo">
@@ -499,10 +506,11 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
         
         selectStatus.value = chamadoAtualParaStatus.status || 'pendente';
+        const statusNormalizado = (chamadoAtualParaStatus.status || '').toLowerCase();
         textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || '';
-        campoResolucao.style.display = (chamadoAtualParaStatus.status || '').toLowerCase() === 'resolvido' ? 'block' : 'none';
+        campoResolucao.style.display = statusNormalizado === 'resolvido' ? 'block' : 'none';
         textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
-        campoPeca.style.display = (chamadoAtualParaStatus.status || '').toLowerCase() === 'aguardando-peça' ? 'block' : 'none';
+        campoPeca.style.display = statusNormalizado === 'aguardando-peça' ? 'block' : 'none';
         validarFormStatus(); // Valida o formulário ao abrir
         modalStatus.style.display = 'flex';
     }
