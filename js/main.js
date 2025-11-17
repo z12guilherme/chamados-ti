@@ -2,13 +2,16 @@
 import { db, storage, dbFunctions, storageFunctions } from './firebase-init.js';
 import { showMessage } from './utils.js'; // Assumindo que showMessage lida com a sanitização de HTML
 
-const { collection, serverTimestamp, doc, setDoc } = dbFunctions;
+const { collection, serverTimestamp, doc, setDoc } = dbFunctions; // CORREÇÃO: Garante que setDoc seja extraído de dbFunctions
 const { ref, uploadBytes, getDownloadURL } = storageFunctions;
 
 const formAberturaChamado = document.getElementById('formAberturaChamado');
 const topMessageEl = document.getElementById('topMessage');
 const anexoInput = document.getElementById('anexo');
 const anexoLabel = document.getElementById('anexoLabel');
+
+// Constantes
+const LIMITE_TAMANHO_ANEXO = 750 * 1024; // 750KB
 
 /**
  * Faz upload de um arquivo para o Firebase Storage.
@@ -73,6 +76,12 @@ formAberturaChamado.addEventListener('submit', async (e) => {
         return;
     }
 
+    // Validação do tamanho do anexo
+    if (anexoFile && anexoFile.size > LIMITE_TAMANHO_ANEXO) {
+        showMessage(topMessageEl, 'O arquivo anexado é muito grande (limite de 750KB). Por favor, use um link externo.', 'error');
+        return;
+    }
+
     const submitButton = formAberturaChamado.querySelector('button[type="submit"]');
     setSubmitButtonState(submitButton, true);
     topMessageEl.style.display = 'none';
@@ -101,7 +110,7 @@ formAberturaChamado.addEventListener('submit', async (e) => {
             resolucao: null,
             pecaSolicitada: null,
             historico: [{
-                timestamp: serverTimestamp(),
+                timestamp: new Date(), // CORREÇÃO: serverTimestamp() não é permitido em arrays. Usamos a data do cliente.
                 usuario: nome,
                 descricao: 'Chamado criado.'
             }]
