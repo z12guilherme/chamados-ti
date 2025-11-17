@@ -72,127 +72,100 @@ onAuthStateChanged(auth, (user) => {
 function carregarChamados() {
     // Reintroduzida a ordenação por data para exibir os chamados mais recentes primeiro.
     const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
+
     onSnapshot(q, (querySnapshot) => {
-        const isUpdate = !isFirstLoad; // Considera uma atualização se não for o primeiro carregamento
-        loader.style.display = 'none';
-
-        // Limpa as listas antes de recarregar
-        listaPendentesEl.innerHTML = '';
-        listaEmAndamentoEl.innerHTML = '';
-        listaAguardandoPecaEl.innerHTML = '';
-        listaResolvidosEl.innerHTML = '';
-
-        todosOsChamados = []; // CORREÇÃO: Limpa a lista geral para reconstruí-la
-        const chamados = {
-            pendentes: [],
-            aguardandoPeca: [],
-            emAndamento: [],
-            resolvidos: []
-        };
-
-        // --- MELHORIA: Lógica de Notificação ---
-        if (isUpdate && querySnapshot.docChanges().some(change => change.type === 'added')) {
-            const newDoc = querySnapshot.docChanges().find(change => change.type === 'added').doc.data();
-            
-            // Notificação de Desktop (já implementada)
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('Novo Chamado Aberto!', {
-                    body: `Solicitante: ${newDoc.nome}\nSetor: ${newDoc.setor}`,
-                });
-            }
-
-            // --- MELHORIA 2: Tocar som e piscar título ---
-            audio.play().catch(e => console.log("Não foi possível tocar o som. Interação do usuário pode ser necessária."));
-
-            // Começa a piscar o título se já não estiver piscando
-            if (!intervalId) {
-                intervalId = setInterval(() => {
-                    document.title = document.title === originalTitle ? '*** NOVO CHAMADO! ***' : originalTitle;
-                }, 1000);
-            }
+        if (isFirstLoad) {
+            loader.style.display = 'none';
+            // No primeiro carregamento, preenche a lista 'todosOsChamados'
+            todosOsChamados = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
         }
 
-
-        querySnapshot.forEach((documento) => {
-            const chamado = documento.data();
-            const id = documento.id;
-            chamado.id = id;
-            todosOsChamados.push(chamado); // Adiciona o chamado à lista geral
- 
-            // CORREÇÃO: A variável 'status' não estava definida neste escopo.
+        querySnapshot.docChanges().forEach((change) => {
+            const chamado = { ...change.doc.data(), id: change.doc.id };
             const status = (chamado.status || 'Pendente').trim().toLowerCase();
-            const card = criarCardChamado(chamado);
- 
-            // Separa os chamados por categoria
-            if (status === 'pendente') {
-                chamados.pendentes.push(card);
-            } else if (status === 'em-andamento') {
-                chamados.emAndamento.push(card);
-            } else if (status === 'aguardando-peça') {
-                chamados.aguardandoPeca.push(card);
-            } else if (status === 'resolvido') {
-                chamados.resolvidos.push(card);
+
+            if (change.type === "added") {
+                if (!isFirstLoad) {
+                    // Adiciona ao array global apenas se não for o primeiro carregamento
+                    todosOsChamados.unshift(chamado); // Adiciona no início
+                    dispararNotificacao(chamado);
+                }
+                const card = criarCardChamado(chamado);
+                adicionarCardNaLista(card, status);
+            }
+
+            if (change.type === "modified") {
+                const index = todosOsChamados.findIndex(c => c.id === chamado.id);
+                if (index > -1) {
+                    todosOsChamados[index] = chamado;
+                }
+
+                const cardExistente = document.querySelector(`.chamado-card[data-id="${chamado.id}"]`);
+                if (cardExistente) {
+                    const novoCard = criarCardChamado(chamado);
+                    const statusAntigo = cardExistente.parentElement.id.replace('lista', '').toLowerCase();
+                    
+                    // Se o status mudou, remove do antigo e adiciona no novo. Senão, apenas substitui.
+                    if (statusAntigo !== status.replace('-', '')) {
+                        cardExistente.remove();
+                        adicionarCardNaLista(novoCard, status);
+                    } else {
+                        cardExistente.replaceWith(novoCard);
+                    }
+                }
+            }
+
+            if (change.type === "removed") {
+                todosOsChamados = todosOsChamados.filter(c => c.id !== chamado.id);
+                const cardParaRemover = document.querySelector(`.chamado-card[data-id="${chamado.id}"]`);
+                if (cardParaRemover) {
+                    cardParaRemover.remove();
+                }
             }
         });
 
-        // Exibe os chamados ou a mensagem de "nenhum chamado"
-        const chamadosAtivosContainer = document.getElementById('chamados-ativos');
-        if (chamados.pendentes.length === 0 && chamados.aguardandoPeca.length === 0 && chamados.emAndamento.length === 0) {
-            chamadosAtivosContainer.innerHTML = `<p class="empty-category-message">Nenhum chamado ativo no momento.</p>`;
-        } else {
-            // CORREÇÃO: Limpa a mensagem de "nenhum chamado" se houver chamados, mas preserva os contêineres das listas.
-            if (chamadosAtivosContainer.querySelector('.empty-category-message')) {
-                chamadosAtivosContainer.innerHTML = '';
-            }
-
-            if (chamados.pendentes.length > 0) {
-                if (!document.getElementById('listaPendentes').parentNode) {
-                    chamadosAtivosContainer.appendChild(listaPendentesEl);
-                }
-                listaPendentesEl.innerHTML = '<h4>Pendentes</h4>';
-                chamados.pendentes.forEach(card => listaPendentesEl.appendChild(card));
-            }
-            if (chamados.emAndamento.length > 0) {
-                if (!document.getElementById('listaEmAndamento').parentNode) {
-                    chamadosAtivosContainer.appendChild(listaEmAndamentoEl);
-                }
-                listaEmAndamentoEl.innerHTML = '<h4>Em Andamento</h4>';
-                chamados.emAndamento.forEach(card => listaEmAndamentoEl.appendChild(card));
-            }
-            if (chamados.aguardandoPeca.length > 0) {
-                if (!document.getElementById('listaAguardandoPeca').parentNode) {
-                    chamadosAtivosContainer.appendChild(listaAguardandoPecaEl);
-                }
-                listaAguardandoPecaEl.innerHTML = '<h4>Aguardando Peça</h4>';
-                chamados.aguardandoPeca.forEach(card => listaAguardandoPecaEl.appendChild(card));
-            }
-        }
-        
-        if (chamados.resolvidos.length === 0) {
-            listaResolvidosEl.innerHTML = `<p class="empty-category-message">Nenhum chamado foi resolvido ainda.</p>`;
-        } else {
-            listaResolvidosEl.innerHTML = '<h4>Concluídos</h4>'; // Adiciona o título da seção
-
-            // ORDENAÇÃO: Ordena os chamados resolvidos pela data de resolução (mais recentes primeiro)
-            chamados.resolvidos.sort((cardA, cardB) => {
-                const chamadoA = JSON.parse(cardA.dataset.chamado);
-                const chamadoB = JSON.parse(cardB.dataset.chamado);
-
-                // Usa a data da resolução para ordenar. Se não houver data, considera como mais antigo.
-                const dataResolucaoA = chamadoA.resolucao?.data?.seconds || 0;
-                const dataResolucaoB = chamadoB.resolucao?.data?.seconds || 0;
-
-                return dataResolucaoB - dataResolucaoA;
-            });
-
-            chamados.resolvidos.forEach(card => listaResolvidosEl.appendChild(card));
-        }
-
         // --- MELHORIA: Atualiza os gráficos com os novos dados ---
+        // A lista 'todosOsChamados' agora está sempre atualizada.
         atualizarGraficos(todosOsChamados);
 
         isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
     });
+}
+
+function adicionarCardNaLista(card, status) {
+    let lista;
+    switch (status) {
+        case 'em-andamento':
+            lista = listaEmAndamentoEl;
+            break;
+        case 'aguardando-peça':
+            lista = listaAguardandoPecaEl;
+            break;
+        case 'resolvido':
+            lista = listaResolvidosEl;
+            break;
+        default:
+            lista = listaPendentesEl;
+    }
+    // Adiciona o novo card no topo da lista correspondente
+    lista.insertBefore(card, lista.children[1]); // Insere depois do título h4
+}
+
+function dispararNotificacao(chamado) {
+    // Notificação de Desktop
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Novo Chamado Aberto!', {
+            body: `Solicitante: ${chamado.nome}\nSetor: ${chamado.setor}`,
+        });
+    }
+
+    // Tocar som e piscar título
+    audio.play().catch(e => console.log("Não foi possível tocar o som."));
+    if (!intervalId) {
+        intervalId = setInterval(() => {
+            document.title = document.title === originalTitle ? '*** NOVO CHAMADO! ***' : originalTitle;
+        }, 1000);
+    }
 }
 
 // --- MELHORIA: Função para criar/atualizar os gráficos ---

@@ -34,9 +34,22 @@
             <button type="submit" id="btnConsultar">Consultar</button>
         </form>
 
-        <!-- Área para exibir o resultado da consulta -->
-        <div id="resultadoConsulta" class="resultado-consulta-container" style="display: none;">
-            <!-- O resultado será inserido aqui via JavaScript -->
+        <!-- Área para exibir o resultado das consultas -->
+        <div id="resultadoConsulta" class="resultado-consulta-container" style="display: none;" aria-live="polite">
+            <!-- Loader para feedback visual durante a busca -->
+            <div class="loader-consulta" style="display: none;">Buscando...</div>
+            
+            <!-- Estrutura para exibir os detalhes do chamado -->
+            <div id="detalhesChamado"></div>
+
+            <!-- Estrutura para a linha do tempo do histórico -->
+            <div id="historicoChamado" style="display: none;">
+                <h3>Histórico do Chamado</h3>
+                <ul class="timeline">
+                    <!-- Itens do histórico serão inseridos aqui via JavaScript -->
+                </ul>
+            </div>
+
         </div>
     </div>
 
