@@ -2,12 +2,10 @@
 import { db, storage, dbFunctions, storageFunctions } from './firebase-init.js';
 import { showMessage } from './utils.js'; // Assumindo que showMessage lida com a sanitização de HTML
 
-const { collection, addDoc, serverTimestamp, doc, updateDoc } = dbFunctions;
+const { collection, serverTimestamp, doc, setDoc } = dbFunctions;
 const { ref, uploadBytes, getDownloadURL } = storageFunctions;
 
 const formAberturaChamado = document.getElementById('formAberturaChamado');
-const successMessage = document.getElementById('successMessage');
-const newProtocolNumber = document.getElementById('newProtocolNumber');
 const topMessageEl = document.getElementById('topMessage');
 const anexoInput = document.getElementById('anexo');
 const anexoLabel = document.getElementById('anexoLabel');
@@ -20,10 +18,15 @@ const anexoLabel = document.getElementById('anexoLabel');
  */
 async function uploadAnexo(file, docId) {
     if (!file) return null;
-    // Cria uma referência única para o arquivo no Storage
-    const storageRef = ref(storage, `anexos/${docId}/${file.name}`);
-    await uploadBytes(storageRef, file);
-    return await getDownloadURL(storageRef);
+    try {
+        // Cria uma referência única para o arquivo no Storage
+        const storageRef = ref(storage, `anexos/${docId}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
+    } catch (error) {
+        console.error("Erro no upload do anexo:", error);
+        throw new Error("Falha ao enviar o anexo."); // Propaga o erro para o handler do formulário
+    }
 }
 
 /**
@@ -56,12 +59,13 @@ function setSubmitButtonState(button, isLoading) {
 formAberturaChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const nome = formAberturaChamado.nome.value.trim();
-    const setor = formAberturaChamado.setor.value.trim();
-    const problema = formAberturaChamado.problema.value.trim();
-    const urgencia = document.querySelector('input[name="urgencia"]:checked').value;
-    const anexoFile = document.getElementById('anexo').files[0];
-    const anexoUrlExterno = document.getElementById('anexoUrl').value.trim();
+    const formData = new FormData(formAberturaChamado);
+    const nome = formData.get('nome').trim();
+    const setor = formData.get('setor').trim();
+    const problema = formData.get('problema').trim();
+    const urgencia = formData.get('urgencia');
+    const anexoFile = anexoInput.files[0];
+    const anexoUrlExterno = formData.get('anexoUrl').trim();
 
     // Validação simples
     if (!nome || !setor || !problema || !urgencia) {
@@ -96,7 +100,11 @@ formAberturaChamado.addEventListener('submit', async (e) => {
             anexoUrl: anexoStorageUrl || anexoUrlExterno || null,
             resolucao: null,
             pecaSolicitada: null,
-            historico: []
+            historico: [{
+                timestamp: serverTimestamp(),
+                usuario: nome,
+                descricao: 'Chamado criado.'
+            }]
         };
 
         if (anexoStorageUrl && anexoFile) {
@@ -114,6 +122,7 @@ formAberturaChamado.addEventListener('submit', async (e) => {
 
         // Limpa o formulário e exibe a mensagem de sucesso no topo
         formAberturaChamado.reset();
+        anexoLabel.textContent = 'Clique para selecionar um arquivo...'; // Reseta o label do anexo
         const linkConsulta = `<a href="consulta.html?protocolo=${protocolo}" target="_blank">Clique aqui para consultar.</a>`;
         showMessage(topMessageEl, `✅ Chamado aberto com sucesso! Seu protocolo é <strong>${protocolo}</strong>. ${linkConsulta}`, 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para o topo para ver a mensagem
