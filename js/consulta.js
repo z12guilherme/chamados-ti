@@ -38,16 +38,16 @@ async function consultarChamado(protocolo) {
         // LÓGICA PARA EXIBIR O HISTÓRICO
         let historicoHtml = '';
         if (chamado.historico && chamado.historico.length > 0) {
-            const historicoOrdenado = chamado.historico.sort((a, b) => (b.data.seconds || b.data) - (a.data.seconds || a.data));
+            const historicoOrdenado = chamado.historico.sort((a, b) => (b.timestamp.seconds || b.timestamp) - (a.timestamp.seconds || a.timestamp));
             historicoHtml = `
                 <div class="info-section">
                     <h4>Histórico de Andamento</h4>
                     <ul class="timeline">
                         ${historicoOrdenado.map(item => `
                             <li class="timeline-item">
-                                <span class="timeline-status">${item.status}</span>
-                                <span class="timeline-date">${item.data.toDate ? item.data.toDate().toLocaleString('pt-BR') : new Date(item.data).toLocaleString('pt-BR')}</span>
-                                <span class="timeline-responsavel">por: ${item.responsavel}</span>
+                                <span class="timeline-status">${item.descricao}</span>
+                                <span class="timeline-date">${item.timestamp.toDate ? item.timestamp.toDate().toLocaleString('pt-BR') : new Date(item.timestamp).toLocaleString('pt-BR')}</span>
+                                <span class="timeline-responsavel">por: ${item.usuario}</span>
                             </li>
                         `).join('')}
                     </ul>

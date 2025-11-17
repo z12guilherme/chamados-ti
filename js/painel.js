@@ -672,10 +672,11 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
         updateDoc(chamadoRef, {
             status: 'pendente',
             resolucao: null, // Limpa a resolução anterior
+            // CORREÇÃO: Padroniza a estrutura do objeto de histórico
             historico: arrayUnion({
-                status: 'reaberto',
-                data: new Date(),
-                responsavel: auth.currentUser.email
+                descricao: 'Chamado reaberto pelo painel.',
+                timestamp: new Date(),
+                usuario: auth.currentUser.email
             })
         }).then(() => {
             console.log(`Chamado ${chamadoId} reaberto.`);
@@ -767,18 +768,19 @@ formStatus.addEventListener('submit', async (e) => {
         const docSnap = await getDoc(chamadoRef);
         const chamadoAtual = docSnap.data();
         const novoHistorico = chamadoAtual.historico || [];
+        // CORREÇÃO: Padroniza a estrutura do objeto de histórico
         novoHistorico.push({
-            status: novoStatus,
-            data: new Date(), // Usamos a data local do cliente. serverTimestamp() não é suportado aqui.
-            responsavel: auth.currentUser.email
+            descricao: `Status alterado para: ${novoStatus}`,
+            timestamp: new Date(),
+            usuario: auth.currentUser.email
         });
 
         const dadosParaAtualizar = {
-            status: novoStatus,
+            status: novoStatus.toLowerCase(), // Garante que o status seja salvo em minúsculas
             historico: novoHistorico
         };
 
-        if (novoStatus === 'resolvido') {
+        if (novoStatus.toLowerCase() === 'resolvido') { // CORREÇÃO: Comparar sempre em minúsculas
             if (textoResolucao.value.trim() === '') {
                 alert('Por favor, descreva como o problema foi resolvido.');
                 return;
@@ -788,13 +790,18 @@ formStatus.addEventListener('submit', async (e) => {
                 descricao: textoResolucao.value.trim(),
                 data: serverTimestamp()
             };
-        } else if (novoStatus === 'aguardando-peça') {
+        } else if (novoStatus.toLowerCase() === 'aguardando-peça') {
             if (textoPeca.value.trim() === '') {
                 alert('Por favor, informe qual peça está sendo aguardada.');
                 return;
             }
             dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
             dadosParaAtualizar.resolucao = null; // CORREÇÃO: Limpa a resolução para null
+        }
+        // ADIÇÃO: Garante que se o status não for 'resolvido' nem 'aguardando-peça',
+        // os campos de resolução e peça sejam limpos para evitar dados inconsistentes.
+        else {
+            dadosParaAtualizar.resolucao = null;
         }
 
         await updateDoc(chamadoRef, dadosParaAtualizar);
