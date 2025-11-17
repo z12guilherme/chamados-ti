@@ -327,7 +327,13 @@ function atualizarGraficos(chamados) {
 
     // 3. NOVO: Gráfico de Chamados por Urgência
     const contagemUrgencia = chamados.reduce((acc, chamado) => {
-        const urgencia = (chamado.urgencia || 'baixa').charAt(0).toUpperCase() + (chamado.urgencia || 'baixa').slice(1);
+        // CORREÇÃO: Normaliza para minúsculas e unifica 'media' e 'média' para garantir que sejam contadas juntas.
+        let urgenciaRaw = (chamado.urgencia || 'baixa').toLowerCase();
+        if (urgenciaRaw === 'media') {
+            urgenciaRaw = 'média'; // Padroniza para a versão com acento.
+        }
+
+        const urgencia = urgenciaRaw.charAt(0).toUpperCase() + urgenciaRaw.slice(1);
         acc[urgencia] = (acc[urgencia] || 0) + 1;
         return acc;
     }, {});
