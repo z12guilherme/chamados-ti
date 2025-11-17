@@ -380,6 +380,8 @@ function criarCardChamado(chamado) {
              <a href="#" class="anexo-link" data-chamado-id="${id}">Ver Anexo</a>
            </div>`
         : '';
+           </div>`;
+    }
 
     const pecaHtml = status === 'aguardando-peça' && chamado.pecaAguardando
         ? `<div class="peca-info">
