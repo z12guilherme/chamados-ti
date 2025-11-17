@@ -1,6 +1,6 @@
 // js/main.js
 import { db, storage, dbFunctions, storageFunctions } from './firebase-init.js';
-import { showMessage } from './utils.js';
+import { showMessage } from './utils.js'; // Assumindo que showMessage lida com a sanitização de HTML
 
 const { collection, addDoc, serverTimestamp, doc, updateDoc } = dbFunctions;
 const { ref, uploadBytes, getDownloadURL } = storageFunctions;
@@ -27,20 +27,31 @@ async function uploadAnexo(file, docId) {
 }
 
 /**
- * Gera um número de protocolo único.
- * Formato: CH-ANO-XXXXXX (onde X é um caractere aleatório)
+ * Gera um número de protocolo único baseado no ID do documento.
+ * Formato: CH-ANO-FINAL_ID (onde FINAL_ID são os últimos 6 caracteres do ID do documento)
+ * @param {string} docId O ID do documento do Firestore.
  * @returns {string} O protocolo gerado.
  */
-function gerarProtocolo() {
-    const ano = new Date().getFullYear(); // Usa o ano completo (4 dígitos)
-    const randomChars = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return `CH-${ano}-${randomChars}`;
+function gerarProtocolo(docId) {
+    const ano = new Date().getFullYear();
+    const idFinal = docId.slice(-6).toUpperCase();
+    return `CH-${ano}-${idFinal}`;
 }
 
 anexoInput.addEventListener('change', () => {
     const fileName = anexoInput.files.length > 0 ? anexoInput.files[0].name : 'Clique para selecionar um arquivo...';
     anexoLabel.textContent = fileName;
 });
+
+/**
+ * Controla o estado do botão de submit do formulário.
+ * @param {HTMLButtonElement} button O elemento do botão.
+ * @param {boolean} isLoading Se o estado é de carregamento.
+ */
+function setSubmitButtonState(button, isLoading) {
+    button.disabled = isLoading;
+    button.textContent = isLoading ? 'Enviando...' : 'Abrir Chamado';
+}
 
 formAberturaChamado.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -58,16 +69,23 @@ formAberturaChamado.addEventListener('submit', async (e) => {
         return;
     }
 
-    const btnSubmit = formAberturaChamado.querySelector('button[type="submit"]');
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Enviando...';
+    const submitButton = formAberturaChamado.querySelector('button[type="submit"]');
+    setSubmitButtonState(submitButton, true);
     topMessageEl.style.display = 'none';
 
     try {
-        const protocolo = gerarProtocolo();
+        // 1. Gera uma referência de documento no cliente para obter um ID único ANTES de qualquer operação de escrita.
+        const newChamadoRef = doc(collection(db, "chamados"));
+        const docId = newChamadoRef.id;
 
-        // 1. Cria o documento no Firestore com os dados iniciais para obter um ID
-        const docRef = await addDoc(collection(db, "chamados"), {
+        // 2. Faz o upload do anexo para o Storage usando o ID gerado.
+        const anexoStorageUrl = await uploadAnexo(anexoFile, docId);
+
+        // 3. Gera o protocolo usando o ID único do documento.
+        const protocolo = gerarProtocolo(docId);
+
+        // 4. Monta o objeto do chamado.
+        const chamadoData = {
             nome,
             setor,
             problema,
@@ -75,28 +93,24 @@ formAberturaChamado.addEventListener('submit', async (e) => {
             protocolo,
             status: 'pendente',
             dataAbertura: serverTimestamp(),
+            anexoUrl: anexoStorageUrl || anexoUrlExterno || null,
             resolucao: null,
             pecaSolicitada: null,
-            anexoUrl: anexoUrlExterno || null, // Salva o link externo imediatamente
-            historico: [] // CORREÇÃO: Inicializa o histórico como um array vazio
-        });
+            historico: []
+        };
 
-        // 2. Faz o upload do anexo para o Firebase Storage (se houver)
-        const anexoStorageUrl = await uploadAnexo(anexoFile, docRef.id);
-
-        // 3. Atualiza o documento com a URL do anexo do Storage (se foi feito upload)
-        if (anexoStorageUrl) {
-            await updateDoc(doc(db, "chamados", docRef.id), {
-                anexoUrl: anexoStorageUrl, // Sobrescreve o link externo se um arquivo foi enviado
-                anexoInfo: {
-                    nome: anexoFile.name,
-                    tipo: anexoFile.type,
-                    path: `anexos/${docRef.id}/${anexoFile.name}`
-                }
-            });
+        if (anexoStorageUrl && anexoFile) {
+            chamadoData.anexoInfo = {
+                nome: anexoFile.name,
+                tipo: anexoFile.type,
+                path: `anexos/${docId}/${anexoFile.name}`
+            };
         }
 
-        console.log("Chamado aberto com sucesso! ID:", docRef.id);
+        // 5. Cria o documento no Firestore de uma só vez.
+        await setDoc(newChamadoRef, chamadoData);
+
+        console.log("Chamado aberto com sucesso! ID:", docId);
 
         // Limpa o formulário e exibe a mensagem de sucesso no topo
         formAberturaChamado.reset();
@@ -109,7 +123,6 @@ formAberturaChamado.addEventListener('submit', async (e) => {
         showMessage(topMessageEl, `Ocorreu um erro ao abrir seu chamado. Tente novamente. Detalhes: ${error.message}`, 'error');
         
     } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Abrir Chamado';
+        setSubmitButtonState(submitButton, false);
     }
 });
