@@ -118,9 +118,11 @@ function carregarChamados() {
             const id = documento.id;
             chamado.id = id;
             todosOsChamados.push(chamado); // Adiciona o chamado à lista geral
-
+ 
+            // CORREÇÃO: A variável 'status' não estava definida neste escopo.
+            const status = (chamado.status || 'Pendente').trim().toLowerCase();
             const card = criarCardChamado(chamado);
-
+ 
             // Separa os chamados por categoria
             if (status === 'pendente') {
                 chamados.pendentes.push(card);
@@ -378,21 +380,13 @@ function criarCardChamado(chamado) {
     if (chamado.anexoBase64) {
         anexoHtml = `<div class="anexo-info">
              <a href="#" class="anexo-link" data-chamado-id="${id}">Ver Anexo</a>
-           </div>`
-        : '';
            </div>`;
     }
-
+ 
     const pecaHtml = status === 'aguardando-peça' && chamado.pecaAguardando
         ? `<div class="peca-info">
              <strong>Aguardando Peça:</strong> ${chamado.pecaAguardando}
-           </div>`
-        : '';
-
-    const urgenciaClass = chamado.urgencia ? `urgencia-${chamado.urgencia.toLowerCase()}` : '';
-    const urgenciaHtml = chamado.urgencia
-        ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
-        : '';
+           </div>` : '';
 
     // Combina com a lógica de anexo externo que já existia
     if (chamado.anexoUrl && !chamado.anexoBase64) {
@@ -400,6 +394,11 @@ function criarCardChamado(chamado) {
              <a href="${chamado.anexoUrl}" class="anexo-link" target="_blank" rel="noopener noreferrer">Ver Anexo (Link Externo)</a>
            </div>`;
     }
+
+    const urgenciaClass = chamado.urgencia ? `urgencia-${chamado.urgencia.toLowerCase()}` : '';
+    const urgenciaHtml = chamado.urgencia
+        ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
+        : '';
 
     const card = document.createElement('div');
     card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
