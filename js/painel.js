@@ -128,6 +128,8 @@ function carregarChamados() {
         // A lista 'todosOsChamados' agora está sempre atualizada.
         atualizarGraficos(todosOsChamados);
 
+        // ADIÇÃO: Verifica e exibe mensagens de lista vazia
+        verificarEmptyStates();
         isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
     });
 }
@@ -149,6 +151,23 @@ function adicionarCardNaLista(card, status) {
     }
     // Adiciona o novo card no topo da lista correspondente
     lista.insertBefore(card, lista.children[1]); // Insere depois do título h4
+}
+
+/**
+ * ADIÇÃO: Verifica se as listas de chamados estão vazias e exibe uma mensagem.
+ */
+function verificarEmptyStates() {
+    const listas = [
+        listaPendentesEl,
+        listaEmAndamentoEl,
+        listaAguardandoPecaEl,
+        listaResolvidosEl
+    ];
+    listas.forEach(lista => {
+        const temCards = lista.querySelector('.chamado-card');
+        const mensagem = lista.querySelector('.empty-state-message');
+        if (mensagem) mensagem.style.display = temCards ? 'none' : 'block';
+    });
 }
 
 function dispararNotificacao(chamado) {
@@ -404,7 +423,7 @@ function criarCardChamado(chamado) {
         ${resolucaoHtml}
         <div class="card-footer">
             <div class="data-abertura">Aberto em: ${dataAbertura}</div>
-            <button class="btn-status" data-id="${id}">Alterar</button>
+            <button class="btn-status" data-id="${id}" title="Alterar status do chamado">Atualizar Status</button>
             ${status === 'resolvido' ? `<button class="btn-reabrir" data-id="${id}">Reabrir</button>` : ''}
             <button class="btn-remover" data-id="${id}">Remover</button>
         </div>
@@ -683,33 +702,28 @@ formStatus.addEventListener('submit', async (e) => {
             usuario: auth.currentUser.email
         });
 
-        const dadosParaAtualizar = {
-            status: novoStatus.toLowerCase(), // Garante que o status seja salvo em minúsculas
-            historico: novoHistorico
+        const dadosParaAtualizar = { // Objeto base com as atualizações padrão
+            status: novoStatus,
+            historico: novoHistorico,
+            resolucao: null, // Limpa campos antigos para evitar dados inconsistentes
+            pecaAguardando: null
         };
 
-        if (novoStatus.toLowerCase() === 'resolvido') { // CORREÇÃO: Comparar sempre em minúsculas
+        if (novoStatus === 'resolvido') {
             if (textoResolucao.value.trim() === '') {
                 alert('Por favor, descreva como o problema foi resolvido.');
                 return;
             }
-            // CORREÇÃO: Salva a resolução como um objeto
             dadosParaAtualizar.resolucao = {
                 descricao: textoResolucao.value.trim(),
                 data: serverTimestamp()
             };
-        } else if (novoStatus.toLowerCase() === 'aguardando-peça') {
+        } else if (novoStatus === 'aguardando-peça') {
             if (textoPeca.value.trim() === '') {
                 alert('Por favor, informe qual peça está sendo aguardada.');
                 return;
             }
             dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
-            dadosParaAtualizar.resolucao = null; // CORREÇÃO: Limpa a resolução para null
-        }
-        // ADIÇÃO: Garante que se o status não for 'resolvido' nem 'aguardando-peça',
-        // os campos de resolução e peça sejam limpos para evitar dados inconsistentes.
-        else {
-            dadosParaAtualizar.resolucao = null;
         }
 
         await updateDoc(chamadoRef, dadosParaAtualizar);

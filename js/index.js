@@ -1,5 +1,5 @@
 import { db, dbFunctions } from './firebase-init.js';
-import { showMessage } from './utils.js';
+import { showMessage, gerarProtocolo } from './utils.js';
 
 const { collection, addDoc, serverTimestamp } = dbFunctions;
 
@@ -86,9 +86,7 @@ formChamado.addEventListener('submit', async (e) => {
             };
         }
 
-        const ano = new Date().getFullYear();
-        const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const protocolo = `CH-${ano}-${randomId}`;
+        const protocolo = gerarProtocolo();
 
         await addDoc(collection(db, COLECAO_CHAMADOS), {
             protocolo,

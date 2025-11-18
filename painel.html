@@ -45,7 +45,7 @@
         <!-- Seção de Filtros Avançados -->
         <div class="filtros-container">
             <input type="text" id="filtro" placeholder="Filtrar por protocolo, nome, setor..." class="filtro-input">
-            <select id="filtroStatus" class="filtro-select"><option value="">Todos os Status</option><option value="pendente">Pendente</option><option value="em-andamento">Em Andamento</option><option value="aguardando-peça">Aguardando Peça</option><option value="Resolvido">Resolvido</option></select>
+            <select id="filtroStatus" class="filtro-select"><option value="">Todos os Status</option><option value="pendente">Pendente</option><option value="em-andamento">Em Andamento</option><option value="aguardando-peça">Aguardando Peça</option><option value="resolvido">Resolvido</option></select>
             <select id="filtroUrgencia" class="filtro-select"><option value="">Todas as Urgências</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select>
             <button id="btnLimparFiltros" class="btn-limpar-filtros">Limpar Filtros</button>
         </div>
@@ -54,15 +54,21 @@
             <!-- Seção para chamados que precisam de atenção -->
             <div class="categoria-section" id="chamados-ativos">
                 <h3>Chamados Ativos</h3>
-                <div id="listaPendentes"></div>
-                <div id="listaEmAndamento"></div>
-                <div id="listaAguardandoPeca"></div>
+                <div id="listaPendentes">
+                    <p class="empty-state-message" style="display: none;">🎉 Nenhum chamado pendente no momento.</p>
+                </div>
+                <div id="listaEmAndamento">
+                    <p class="empty-state-message" style="display: none;">Nenhum chamado em andamento.</p>
+                </div>
+                <div id="listaAguardandoPeca">
+                    <p class="empty-state-message" style="display: none;">Nenhum chamado aguardando peças.</p>
+                </div>
             </div>
 
             <!-- Seção para chamados já resolvidos -->
             <div class="categoria-section" id="chamados-resolvidos">
                 <h3>Histórico de Resolvidos</h3>
-                <div id="listaResolvidos"></div>
+                <div id="listaResolvidos"><p class="empty-state-message" style="display: none;">Ainda não há chamados resolvidos.</p></div>
                 <button id="btnCarregarMaisResolvidos" class="btn-load-more" style="display: none;">Carregar Mais</button>
             </div>
             <div class="loader"></div> 
@@ -92,7 +98,7 @@
                         <option value="pendente" selected>Pendente</option>
                         <option value="em-andamento">Em Andamento</option>
                         <option value="aguardando-peça">Aguardando Peça</option>
-                        <option value="Resolvido">Resolvido</option>
+                        <option value="resolvido">Resolvido</option>
                     </select>
                 </div>
                 <div class="form-group" id="campoResolucao" style="display: none;">

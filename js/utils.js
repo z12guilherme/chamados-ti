@@ -11,3 +11,13 @@ export function showMessage(element, message, type) {
   element.innerHTML = message;
   element.style.display = 'block';
 }
+
+/**
+ * Gera um número de protocolo único.
+ * @returns {string} O protocolo gerado no formato CH-ANO-XXXXX.
+ */
+export function gerarProtocolo() {
+    const ano = new Date().getFullYear();
+    const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
+    return `CH-${ano}-${aleatorio}`;
+}
