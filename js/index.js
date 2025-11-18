@@ -12,7 +12,7 @@ const anexoUrlInput = document.getElementById('anexoUrl');
 
 // Constantes
 const LIMITE_TAMANHO_ANEXO = 750 * 1024; // 750KB
-const STATUS_PENDENTE = 'Pendente';
+const STATUS_PENDENTE = 'pendente'; // PADRONIZAÇÃO: Usar status em minúsculo
 const BTN_TEXT_ENVIANDO = 'Enviando...';
 const BTN_TEXT_PADRAO = 'Abrir Chamado';
 const COLECAO_CHAMADOS = 'chamados';

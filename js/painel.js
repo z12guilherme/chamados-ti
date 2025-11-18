@@ -102,15 +102,18 @@ function carregarChamados() {
 
                 const cardExistente = document.querySelector(`.chamado-card[data-id="${chamado.id}"]`);
                 if (cardExistente) {
-                    const novoCard = criarCardChamado(chamado);
-                    const statusAntigo = cardExistente.parentElement.id.replace('lista', '').toLowerCase();
-                    
-                    // Se o status mudou, remove do antigo e adiciona no novo. Senão, apenas substitui.
-                    if (statusAntigo !== status.replace('-', '')) {
+                    const statusAntigo = cardExistente.dataset.status;
+
+                    // Otimização: Se o status mudou, movemos o card. Senão, apenas atualizamos o conteúdo.
+                    if (statusAntigo !== status) {
+                        // O status mudou, então o card precisa ser movido para outra lista.
                         cardExistente.remove();
+                        const novoCard = criarCardChamado(chamado); // Recria o card para a nova lista
                         adicionarCardNaLista(novoCard, status);
                     } else {
-                        cardExistente.replaceWith(novoCard);
+                        // O status é o mesmo, então apenas atualizamos o card existente.
+                        // Isso é muito mais performático do que recriar o elemento.
+                        atualizarCardExistente(cardExistente, chamado);
                     }
                 }
             }
@@ -151,6 +154,17 @@ function adicionarCardNaLista(card, status) {
     }
     // Adiciona o novo card no topo da lista correspondente
     lista.insertBefore(card, lista.children[1]); // Insere depois do título h4
+}
+
+/**
+ * OTIMIZAÇÃO: Atualiza um card existente no DOM sem recriá-lo.
+ * @param {HTMLElement} cardElement O elemento do card a ser atualizado.
+ * @param {object} chamadoData Os novos dados do chamado.
+ */
+function atualizarCardExistente(cardElement, chamadoData) {
+    const novoCardHTML = criarCardChamado(chamadoData).innerHTML;
+    cardElement.innerHTML = novoCardHTML;
+    cardElement.dataset.chamado = JSON.stringify(chamadoData); // Atualiza os dados no dataset
 }
 
 /**
@@ -401,6 +415,7 @@ function criarCardChamado(chamado) {
     const card = document.createElement('div');
     card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
     card.dataset.id = id;
+    card.dataset.status = status; // OTIMIZAÇÃO: Adiciona o status ao dataset para fácil acesso
     card.dataset.chamado = JSON.stringify(chamado);
 
     card.innerHTML = `
@@ -702,11 +717,12 @@ formStatus.addEventListener('submit', async (e) => {
             usuario: auth.currentUser.email
         });
 
-        const dadosParaAtualizar = { // Objeto base com as atualizações padrão
+        let dadosParaAtualizar = { // Objeto base com as atualizações padrão
             status: novoStatus,
             historico: novoHistorico,
-            resolucao: null, // Limpa campos antigos para evitar dados inconsistentes
-            pecaAguardando: null
+            // Limpa campos antigos para evitar dados inconsistentes
+            ...(chamadoAtual.resolucao && { resolucao: null }),
+            ...(chamadoAtual.pecaAguardando && { pecaAguardando: null })
         };
 
         if (novoStatus === 'resolvido') {
@@ -714,16 +730,19 @@ formStatus.addEventListener('submit', async (e) => {
                 alert('Por favor, descreva como o problema foi resolvido.');
                 return;
             }
-            dadosParaAtualizar.resolucao = {
-                descricao: textoResolucao.value.trim(),
-                data: serverTimestamp()
+            dadosParaAtualizar = {
+                ...dadosParaAtualizar,
+                resolucao: {
+                    descricao: textoResolucao.value.trim(),
+                    data: serverTimestamp()
+                }
             };
         } else if (novoStatus === 'aguardando-peça') {
             if (textoPeca.value.trim() === '') {
                 alert('Por favor, informe qual peça está sendo aguardada.');
                 return;
             }
-            dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
+            dadosParaAtualizar.pecaAguardando = textoPeca.value.trim(); // Adiciona o campo diretamente
         }
 
         await updateDoc(chamadoRef, dadosParaAtualizar);
