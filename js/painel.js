@@ -358,7 +358,7 @@ function criarCardChamado(chamado) {
     let anexoHtml = '';
     if (chamado.anexoBase64) {
         anexoHtml = `<div class="anexo-info">
-             <a href="#" class="anexo-link" data-chamado-id="${id}">Ver Anexo</a>
+             <a href="${chamado.anexoBase64}" class="anexo-link" data-id="${id}">Ver Anexo</a>
            </div>`;
     }
  
@@ -530,14 +530,12 @@ btnExportarExcel.addEventListener('click', () => {
 document.querySelector('.categorias-container').addEventListener('click', (e) => {
     const target = e.target;
 
-    // CORREÇÃO: Lógica para visualizar o anexo (Modal ou Nova Aba)
-    // Esta verificação deve vir ANTES das outras que dependem de 'data-id'
+    // Ação 1: Visualizar o anexo (tratada com prioridade)
     if (target.classList.contains('anexo-link')) {
-        // ATUALIZADO: Apenas executa a lógica se for um anexo interno (com data-chamado-id)
-        // Se for um link externo (Google Drive), o navegador cuidará disso.
-        if (target.dataset.chamadoId) {
+        // Verifica se é um anexo interno (com data-id) e não um link externo
+        if (target.dataset.id && !target.getAttribute('href').startsWith('http')) {
             e.preventDefault(); // Impede que o link '#' navegue
-            const chamadoId = target.dataset.chamadoId;
+            const chamadoId = target.dataset.id;
             const chamadoCompleto = todosOsChamados.find(c => c.id === chamadoId);
     
             if (chamadoCompleto && chamadoCompleto.anexoBase64) {
@@ -552,14 +550,14 @@ document.querySelector('.categorias-container').addEventListener('click', (e) =>
                 }
             }
         }
+        return; // Encerra a execução aqui, pois a ação de anexo já foi tratada.
     }
 
-    // As ações abaixo dependem do 'data-id'
+    // Ações 2, 3, 4... (Alterar, Remover, Reabrir)
     if (!target.dataset.id) return;
 
-    chamadoIdParaAcao = target.dataset.id;
-
     if (target.classList.contains('btn-remover')) {
+        chamadoIdParaAcao = target.dataset.id; // Armazena o ID para a ação de exclusão
         modalConfirmacao.style.display = 'flex';
     }
 

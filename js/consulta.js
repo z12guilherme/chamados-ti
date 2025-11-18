@@ -75,6 +75,22 @@ async function consultarChamado(protocolo) {
             `;
         }
 
+        // LÓGICA PARA EXIBIR O ANEXO (BASE64)
+        let anexoHtml = '';
+        if (chamado.anexoBase64 && chamado.anexoInfo) {
+            anexoHtml = `
+                <div class="info-section anexo-section">
+                    <h4>Anexo</h4>
+                    <div class="anexo-container">
+                        <a href="${chamado.anexoBase64}" target="_blank" title="Clique para ver a imagem completa">
+                            <img src="${chamado.anexoBase64}" alt="Anexo do chamado" class="anexo-thumbnail">
+                        </a>
+                        <a href="${chamado.anexoBase64}" target="_blank" class="anexo-nome">${chamado.anexoInfo.nome}</a>
+                    </div>
+                </div>
+            `;
+        }
+
         resultadoConsultaEl.innerHTML = `
             <div class="card-consulta">
                 <div class="card-consulta-header">
@@ -102,6 +118,7 @@ async function consultarChamado(protocolo) {
                             <p>${chamado.problema}</p>
                         </div>
                     </div>
+                    ${anexoHtml}
                     ${historicoHtml}
                     ${resolucaoHtml}
                 </div>
