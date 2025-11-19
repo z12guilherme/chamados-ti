@@ -4,92 +4,160 @@ import { db, auth, dbFunctions, authFunctions } from './firebase-init.js';
 const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDocs, limit, startAfter, where, serverTimestamp, arrayUnion, getDoc } = dbFunctions;
 const { onAuthStateChanged, signOut } = authFunctions;
 
-const btnLogout = document.getElementById('btnLogout');
-const btnExportarExcel = document.getElementById('btnExportarExcel');
+// Declaração de variáveis globais que não dependem do DOM
+let btnLogout, btnExportarExcel, loader, listaPendentesEl, listaEmAndamentoEl, listaAguardandoPecaEl, listaResolvidosEl;
+let modalConfirmacao, btnModalCancelar, btnModalConfirmar, modalStatus, formStatus, selectStatus, btnStatusCancelar;
+let campoResolucao, textoResolucao, campoPeca, textoPeca, btnSalvarStatus, modalAnexo, imgAnexoViewer, closeViewerBtn;
+let btnCarregarMais;
 
-// Elementos das listas de chamados
-const loader = document.querySelector('.loader');
-const listaPendentesEl = document.getElementById('listaPendentes');
-const listaEmAndamentoEl = document.getElementById('listaEmAndamento');
-const listaAguardandoPecaEl = document.getElementById('listaAguardandoPeca');
-const listaResolvidosEl = document.getElementById('listaResolvidos');
+let chamadoIdParaAcao = null;
+let chamadoAtualParaStatus = null;
+let todosOsChamados = [];
 
-const modalConfirmacao = document.getElementById('modalConfirmacao');
-const btnModalCancelar = document.getElementById('btnModalCancelar');
-const btnModalConfirmar = document.getElementById('btnModalConfirmar');
-
-// Elementos do Modal de Status
-const modalStatus = document.getElementById('modalStatus');
-const formStatus = document.getElementById('formStatus');
-const selectStatus = document.getElementById('novoStatus');
-const btnStatusCancelar = document.getElementById('btnStatusCancelar');
-const campoResolucao = document.getElementById('campoResolucao');
-const textoResolucao = document.getElementById('textoResolucao');
-const campoPeca = document.getElementById('campoPeca');
-const textoPeca = document.getElementById('textoPeca');
-const btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
-
-// CORREÇÃO: Reintroduzindo os elementos do Modal
-const modalAnexo = document.getElementById('modalAnexo');
-const imgAnexoViewer = document.getElementById('imgAnexoViewer');
-const closeViewerBtn = document.querySelector('.close-viewer');
-
-
-let chamadoIdParaAcao = null; // Armazena o ID do chamado para exclusão ou mudança de status
-let chamadoAtualParaStatus = null; // Armazena os dados do chamado para o modal de status
-let todosOsChamados = []; // Armazena todos os chamados para a exportação
-
-// --- MELHORIA: Gráficos ---
 let graficoStatusInstance = null;
 let graficoSetoresInstance = null;
 let graficoUrgenciaInstance = null;
 
-// --- MELHORIA: Notificações no Navegador ---
-// Solicita permissão para notificações assim que o painel carrega
-if ('Notification' in window && Notification.permission !== 'granted') {
-    Notification.requestPermission();
-}
-let isFirstLoad = true; // Flag para evitar notificação no primeiro carregamento
+let ultimoDocumentoVisivel = null;
+const CHAMADOS_POR_PAGINA = 25;
+let carregandoMais = false;
 
-// --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
-const audio = new Audio('assets/sounds/notification.mp3');
-const originalTitle = document.title;
-let intervalId = null; // Controla o piscar do título
+let isFirstLoad = true;
+let audio, originalTitle, intervalId = null;
 
 
-// Proteção de Rota e Carregamento de Dados
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // Usuário está logado, busca os chamados
-        carregarChamados();
-    } else {
-        // Usuário não está logado, redireciona para a página de login
-        window.location.href = 'login.html';
-    }
+// SOLUÇÃO: Envolve toda a lógica que depende do DOM em um listener.
+document.addEventListener('DOMContentLoaded', () => {
+    inicializarPainel();
 });
 
-// Função para carregar e exibir os chamados em tempo real
-function carregarChamados() {
-    // Reintroduzida a ordenação por data para exibir os chamados mais recentes primeiro.
-    const q = query(collection(db, "chamados"), orderBy("dataAbertura", "desc"));
+function inicializarPainel() {
+    // Inicialização de variáveis que dependem do DOM
+    btnLogout = document.getElementById('btnLogout');
+    btnExportarExcel = document.getElementById('btnExportarExcel');
+    loader = document.querySelector('.loader');
+    listaPendentesEl = document.getElementById('listaPendentes');
+    listaEmAndamentoEl = document.getElementById('listaEmAndamento');
+    listaAguardandoPecaEl = document.getElementById('listaAguardandoPeca');
+    listaResolvidosEl = document.getElementById('listaResolvidos');
+    modalConfirmacao = document.getElementById('modalConfirmacao');
+    btnModalCancelar = document.getElementById('btnModalCancelar');
+    btnModalConfirmar = document.getElementById('btnModalConfirmar');
+    modalStatus = document.getElementById('modalStatus');
+    formStatus = document.getElementById('formStatus');
+    selectStatus = document.getElementById('novoStatus');
+    btnStatusCancelar = document.getElementById('btnStatusCancelar');
+    campoResolucao = document.getElementById('campoResolucao');
+    textoResolucao = document.getElementById('textoResolucao');
+    campoPeca = document.getElementById('campoPeca');
+    textoPeca = document.getElementById('textoPeca');
+    btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
+    modalAnexo = document.getElementById('modalAnexo');
+    imgAnexoViewer = document.getElementById('imgAnexoViewer');
+    closeViewerBtn = document.querySelector('.close-viewer');
 
-    onSnapshot(q, (querySnapshot) => {
+    // --- MELHORIA: Elementos para Paginação ---
+    btnCarregarMais = document.createElement('button');
+    btnCarregarMais.id = 'btnCarregarMais';
+    btnCarregarMais.className = 'btn-carregar-mais';
+    btnCarregarMais.innerHTML = '<i class="fas fa-plus"></i> Carregar Mais Chamados';
+    // Esta linha agora funcionará, pois '.main-content' já existe.
+    document.querySelector('.main-content').appendChild(btnCarregarMais);
+
+    // --- MELHORIA: Notificações no Navegador ---
+    if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+    }
+
+    // --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
+    audio = new Audio('assets/sounds/notification.mp3');
+    originalTitle = document.title;
+
+    // --- MELHORIA: Injetar Modal de Histórico ---
+    criarModalHistorico();
+
+    // Proteção de Rota e Carregamento de Dados
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            carregarChamados();
+        } else {
+            window.location.href = 'login.html';
+        }
+    });
+
+    // Adiciona todos os outros event listeners que dependem de elementos do DOM
+    adicionarEventListeners();
+}
+
+/**
+ * MELHORIA: Função para carregar chamados com paginação.
+ * @param {boolean} carregarMais - Se true, busca a próxima "página" de chamados.
+ */
+async function carregarChamados(carregarMais = false) {
+    if (carregandoMais) return;
+    carregandoMais = true;
+
+    let q;
+    const chamadosRef = collection(db, "chamados");
+
+    if (carregarMais && ultimoDocumentoVisivel) {
+        btnCarregarMais.textContent = 'Carregando...';
+        q = query(chamadosRef, orderBy("dataAbertura", "desc"), startAfter(ultimoDocumentoVisivel), limit(CHAMADOS_POR_PAGINA)); // CORREÇÃO DE SINTAXE
+    } else {
+        loader.style.display = 'flex';
+        // Limpa o array e as listas para a carga inicial
+        todosOsChamados = [];
+        listaPendentesEl.innerHTML = '<h4><i class="fas fa-hourglass-start"></i> Pendentes</h4>';
+        listaEmAndamentoEl.innerHTML = '<h4><i class="fas fa-tasks"></i> Em Andamento</h4>';
+        listaAguardandoPecaEl.innerHTML = '<h4><i class="fas fa-tools"></i> Aguardando Peça</h4>';
+        listaResolvidosEl.innerHTML = '<h4><i class="fas fa-check-circle"></i> Resolvidos</h4>';
+        q = query(chamadosRef, orderBy("dataAbertura", "desc"), limit(CHAMADOS_POR_PAGINA)); // CORREÇÃO DE SINTAXE
+    }
+
+    try {
+        const querySnapshot = await getDocs(q);
+        ultimoDocumentoVisivel = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+        querySnapshot.forEach((doc) => {
+            const chamado = { ...doc.data(), id: doc.id };
+            if (!todosOsChamados.some(c => c.id === chamado.id)) {
+                todosOsChamados.push(chamado);
+                const card = criarCardChamado(chamado);
+                adicionarCardNaLista(card, (chamado.status || 'Pendente').toLowerCase());
+            }
+        });
+
+        // Esconde ou mostra o botão "Carregar Mais"
+        btnCarregarMais.style.display = querySnapshot.docs.length < CHAMADOS_POR_PAGINA ? 'none' : 'block';
+
         if (isFirstLoad) {
-            loader.style.display = 'none';
-            // No primeiro carregamento, preenche a lista 'todosOsChamados'
-            todosOsChamados = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            escutarNovosChamados(); // Inicia o listener de tempo real APÓS a primeira carga
         }
 
+    } catch (error) {
+        console.error("Erro ao carregar chamados:", error);
+    } finally {
+        loader.style.display = 'none';
+        btnCarregarMais.innerHTML = '<i class="fas fa-plus"></i> Carregar Mais Chamados';
+        carregandoMais = false;
+        isFirstLoad = false;
+        atualizarGraficos(todosOsChamados);
+        verificarEmptyStates();
+    }
+}
+
+function escutarNovosChamados() {
+    const qNovos = query(collection(db, "chamados"), where("dataAbertura", ">", new Date()));
+
+    onSnapshot(qNovos, (querySnapshot) => {
         querySnapshot.docChanges().forEach((change) => {
             const chamado = { ...change.doc.data(), id: change.doc.id };
             const status = (chamado.status || 'Pendente').trim().toLowerCase();
 
             if (change.type === "added") {
-                if (!isFirstLoad) {
-                    // Adiciona ao array global apenas se não for o primeiro carregamento
-                    todosOsChamados.unshift(chamado); // Adiciona no início
-                    dispararNotificacao(chamado);
-                }
+                // Adiciona ao array global apenas se não for o primeiro carregamento
+                todosOsChamados.unshift(chamado); // Adiciona no início
+                dispararNotificacao(chamado);
                 const card = criarCardChamado(chamado);
                 adicionarCardNaLista(card, status);
             }
@@ -127,15 +195,11 @@ function carregarChamados() {
             }
         });
 
-        // --- MELHORIA: Atualiza os gráficos com os novos dados ---
-        // A lista 'todosOsChamados' agora está sempre atualizada.
         atualizarGraficos(todosOsChamados);
-
-        // ADIÇÃO: Verifica e exibe mensagens de lista vazia
         verificarEmptyStates();
-        isFirstLoad = false; // Marca que o primeiro carregamento já ocorreu
     });
 }
+
 
 function adicionarCardNaLista(card, status) {
     let lista;
@@ -438,45 +502,259 @@ function criarCardChamado(chamado) {
         ${resolucaoHtml}
         <div class="card-footer">
             <div class="data-abertura">Aberto em: ${dataAbertura}</div>
-            <button class="btn-status" data-id="${id}" title="Alterar status do chamado">Atualizar Status</button>
-            ${status === 'resolvido' ? `<button class="btn-reabrir" data-id="${id}">Reabrir</button>` : ''}
-            <button class="btn-remover" data-id="${id}">Remover</button>
+            <button class="btn-historico" data-id="${id}" title="Ver histórico do chamado"><i class="fas fa-history"></i> Histórico</button>
+            <button class="btn-status" data-id="${id}" title="Alterar status do chamado"><i class="fas fa-edit"></i> Status</button>
+            ${status === 'resolvido' ? `<button class="btn-reabrir" data-id="${id}" title="Reabrir chamado"><i class="fas fa-undo"></i> Reabrir</button>` : ''}
+            <button class="btn-remover" data-id="${id}" title="Remover chamado"><i class="fas fa-trash"></i> Remover</button>
         </div>
     `;
     return card;
 }
 
-// --- MELHORIA 2: Para de piscar o título quando o usuário volta para a aba ---
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        clearInterval(intervalId);
-        intervalId = null;
-        document.title = originalTitle;
-    }
-});
-
 
 // Event Listeners para Ações
 
-const filtroTextoInput = document.getElementById('filtro');
-const filtroStatusSelect = document.getElementById('filtroStatus');
-const filtroUrgenciaSelect = document.getElementById('filtroUrgencia');
-const btnLimparFiltros = document.getElementById('btnLimparFiltros');
+// --- MELHORIA: Paginação ---
+function adicionarEventListeners() {
+    // --- MELHORIA 2: Para de piscar o título quando o usuário volta para a aba ---
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            clearInterval(intervalId);
+            intervalId = null;
+            document.title = originalTitle;
+        }
+    });
 
-// --- MELHORIA: Debounce para o filtro ---
-let debounceTimer;
+    btnCarregarMais.addEventListener('click', () => carregarChamados(true));
+
+    const filtroTextoInput = document.getElementById('filtro');
+    const filtroStatusSelect = document.getElementById('filtroStatus');
+    const filtroUrgenciaSelect = document.getElementById('filtroUrgencia');
+    const btnLimparFiltros = document.getElementById('btnLimparFiltros');
+
+    let debounceTimer;
+
+    filtroTextoInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            filtrarChamados();
+        }, 300); // Atraso de 300ms
+    });
+
+    filtroStatusSelect.addEventListener('change', filtrarChamados);
+    filtroUrgenciaSelect.addEventListener('change', filtrarChamados);
+    btnLimparFiltros.addEventListener('click', limparFiltros);
+
+    // Logout
+    btnLogout.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            window.location.href = 'index.html';
+        } catch (error) {
+            console.error("Erro ao fazer logout:", error);
+        }
+    });
+
+    // Exportar para Excel
+    btnExportarExcel.addEventListener('click', async () => {
+        const originalText = btnExportarExcel.innerHTML;
+        btnExportarExcel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+        btnExportarExcel.disabled = true;
+
+        const todosOsDocsSnapshot = await getDocs(query(collection(db, "chamados"), orderBy("dataAbertura", "desc")));
+        const chamadosParaExportar = todosOsDocsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+        if (chamadosParaExportar.length === 0) {
+            alert('Nenhum chamado encontrado para exportar.');
+            btnExportarExcel.innerHTML = originalText;
+            btnExportarExcel.disabled = false;
+            return;
+        }
+
+        const dadosParaExportar = chamadosParaExportar.map(chamado => {
+            return {
+                'Data de Abertura': chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'N/A',
+                'Solicitante': chamado.nome,
+                'Setor': chamado.setor,
+                'Problema': chamado.problema,
+                'Urgência': chamado.urgencia,
+                'Status': chamado.status,
+                'Peça Aguardando': chamado.pecaAguardando || '',
+                'Resolução': chamado.resolucao?.descricao || ''
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(dadosParaExportar);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Chamados');
+        const nomeArquivo = `Relatorio_Chamados_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
+        XLSX.writeFile(workbook, nomeArquivo);
+
+        btnExportarExcel.innerHTML = originalText;
+        btnExportarExcel.disabled = false;
+    });
+
+    // Delegação de eventos para os botões de ação nos cards
+    document.querySelector('.categorias-container').addEventListener('click', (e) => {
+        const target = e.target.closest('button, a'); // Garante que pegamos o botão ou link, mesmo clicando no ícone dentro dele
+        if (!target) return;
+
+        if (target.classList.contains('anexo-link')) {
+            if (target.dataset.id && !target.getAttribute('href').startsWith('http')) {
+                e.preventDefault();
+                const chamadoId = target.dataset.id;
+                const chamadoCompleto = todosOsChamados.find(c => c.id === chamadoId);
+
+                if (chamadoCompleto && chamadoCompleto.anexoBase64) {
+                    const tipoAnexo = chamadoCompleto.anexoInfo?.tipo || '';
+                    if (tipoAnexo.startsWith('image/')) {
+                        abrirModalAnexo(chamadoCompleto.anexoBase64);
+                    } else {
+                        window.open(chamadoCompleto.anexoBase64, '_blank');
+                    }
+                }
+            }
+            return;
+        }
+
+        if (!target.dataset.id) return;
+
+        if (target.classList.contains('btn-remover')) {
+            chamadoIdParaAcao = target.dataset.id;
+            modalConfirmacao.style.display = 'flex';
+        }
+
+        if (target.classList.contains('btn-status')) {
+            const card = target.closest('.chamado-card');
+            chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
+
+            selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
+            const statusNormalizado = (chamadoAtualParaStatus.status || '').toLowerCase();
+            textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || '';
+            campoResolucao.style.display = statusNormalizado === 'resolvido' ? 'block' : 'none';
+            textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
+            campoPeca.style.display = statusNormalizado === 'aguardando-peça' ? 'block' : 'none';
+            validarFormStatus();
+            modalStatus.style.display = 'flex';
+        }
+
+        if (target.classList.contains('btn-reabrir')) {
+            const chamadoId = target.dataset.id;
+            const chamadoRef = doc(db, "chamados", chamadoId);
+            updateDoc(chamadoRef, {
+                status: 'pendente',
+                resolucao: null,
+                historico: arrayUnion({
+                    descricao: 'Chamado reaberto pelo painel.',
+                    timestamp: new Date(),
+                    usuario: auth.currentUser.email
+                })
+            }).then(() => {
+                console.log(`Chamado ${chamadoId} reaberto.`);
+            });
+        }
+
+        if (target.classList.contains('btn-historico')) {
+            const card = target.closest('.chamado-card');
+            const chamadoData = JSON.parse(card.dataset.chamado);
+            abrirModalHistorico(chamadoData);
+        }
+    });
+
+    // Ações do Modal de Exclusão
+    btnModalCancelar.addEventListener('click', () => {
+        modalConfirmacao.style.display = 'none';
+        chamadoIdParaAcao = null;
+    });
+
+    btnModalConfirmar.addEventListener('click', async () => {
+        if (chamadoIdParaAcao) {
+            await deleteDoc(doc(db, "chamados", chamadoIdParaAcao));
+            modalConfirmacao.style.display = 'none';
+            chamadoIdParaAcao = null;
+        }
+    });
+
+    // Fecha o modal ao clicar no 'X'
+    closeViewerBtn.onclick = function() {
+        modalAnexo.style.display = "none";
+    }
+
+    // Ações do Modal de Status
+    btnStatusCancelar.addEventListener('click', () => {
+        modalStatus.style.display = 'none';
+        campoResolucao.style.display = 'none';
+        campoPeca.style.display = 'none';
+        chamadoIdParaAcao = null;
+        chamadoAtualParaStatus = null;
+    });
+
+    selectStatus.addEventListener('change', () => {
+        validarFormStatus();
+    });
+
+    textoResolucao.addEventListener('input', validarFormStatus);
+    textoPeca.addEventListener('input', validarFormStatus);
+
+    formStatus.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (chamadoAtualParaStatus && chamadoAtualParaStatus.id) {
+            const novoStatus = selectStatus.value;
+            const chamadoId = chamadoAtualParaStatus.id;
+            const chamadoRef = doc(db, "chamados", chamadoId);
+
+            const docSnap = await getDoc(chamadoRef);
+            const chamadoAtual = docSnap.data();
+            const novoHistorico = chamadoAtual.historico || [];
+            novoHistorico.push({
+                descricao: `Status alterado para: ${novoStatus}`,
+                timestamp: new Date(),
+                usuario: auth.currentUser.email
+            });
+
+            let dadosParaAtualizar = {
+                status: novoStatus,
+                historico: novoHistorico,
+                ...(chamadoAtual.resolucao && { resolucao: null }),
+                ...(chamadoAtual.pecaAguardando && { pecaAguardando: null })
+            };
+
+            if (novoStatus === 'resolvido') {
+                if (textoResolucao.value.trim() === '') {
+                    alert('Por favor, descreva como o problema foi resolvido.');
+                    return;
+                }
+                dadosParaAtualizar = {
+                    ...dadosParaAtualizar,
+                    resolucao: {
+                        descricao: textoResolucao.value.trim(),
+                        data: serverTimestamp()
+                    }
+                };
+            } else if (novoStatus === 'aguardando-peça') {
+                if (textoPeca.value.trim() === '') {
+                    alert('Por favor, informe qual peça está sendo aguardada.');
+                    return;
+                }
+                dadosParaAtualizar.pecaAguardando = textoPeca.value.trim();
+            }
+
+            await updateDoc(chamadoRef, dadosParaAtualizar);
+            modalStatus.style.display = 'none';
+            chamadoAtualParaStatus = null;
+        }
+    });
+}
 
 function filtrarChamados() {
-    const termo = filtroTextoInput.value.toLowerCase().trim();
-    const statusFiltro = filtroStatusSelect.value;
-    const urgenciaFiltro = filtroUrgenciaSelect.value;
+    const termo = document.getElementById('filtro').value.toLowerCase().trim();
+    const statusFiltro = document.getElementById('filtroStatus').value;
+    const urgenciaFiltro = document.getElementById('filtroUrgencia').value;
     const todosOsCards = document.querySelectorAll('.chamado-card');
 
     todosOsCards.forEach(card => {
-        // Pega os dados do dataset, que é mais confiável
         const chamadoData = JSON.parse(card.dataset.chamado);
 
-        // 1. Verifica o filtro de texto
         const textoParaBuscar = [
             chamadoData.protocolo || '',
             chamadoData.nome || '',
@@ -485,186 +763,25 @@ function filtrarChamados() {
         ].join(' ').toLowerCase();
         const matchTexto = textoParaBuscar.includes(termo);
 
-        // 2. Verifica o filtro de status
         const matchStatus = !statusFiltro || (chamadoData.status || '').toLowerCase() === statusFiltro.toLowerCase();
-
-        // 3. Verifica o filtro de urgência
         const matchUrgencia = !urgenciaFiltro || (chamadoData.urgencia || '').toLowerCase() === urgenciaFiltro;
 
-        // O card só é exibido se todas as condições forem verdadeiras
         card.style.display = matchTexto && matchStatus && matchUrgencia ? 'block' : 'none';
     });
 }
 
 function limparFiltros() {
-    filtroTextoInput.value = '';
-    filtroStatusSelect.value = '';
-    filtroUrgenciaSelect.value = '';
+    document.getElementById('filtro').value = '';
+    document.getElementById('filtroStatus').value = '';
+    document.getElementById('filtroUrgencia').value = '';
     filtrarChamados();
 }
 
-filtroTextoInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        filtrarChamados();
-    }, 300); // Atraso de 300ms
-});
-
-filtroStatusSelect.addEventListener('change', filtrarChamados);
-filtroUrgenciaSelect.addEventListener('change', filtrarChamados);
-btnLimparFiltros.addEventListener('click', limparFiltros);
-
-
-// Logout
-btnLogout.addEventListener('click', async () => {
-    try {
-        await signOut(auth);
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error("Erro ao fazer logout:", error);
-    }
-});
-
-// Exportar para Excel
-btnExportarExcel.addEventListener('click', () => {
-    if (todosOsChamados.length === 0) {
-        alert('Não há chamados para exportar.');
-        return;
-    }
-
-    // Formata os dados para a planilha
-    const dadosParaExportar = todosOsChamados.map(chamado => {
-        return {
-            'Data de Abertura': chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'N/A',
-            'Solicitante': chamado.nome,
-            'Setor': chamado.setor,
-            'Problema': chamado.problema,
-            'Urgência': chamado.urgencia,
-            'Status': chamado.status,
-            'Peça Aguardando': chamado.pecaAguardando || '',
-            'Resolução': chamado.resolucao || ''
-        };
-    });
-
-    // Cria a planilha a partir do array de objetos
-    const worksheet = XLSX.utils.json_to_sheet(dadosParaExportar);
-
-    // Cria um novo workbook
-    const workbook = XLSX.utils.book_new();
-
-    // Adiciona a planilha ao workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Chamados');
-
-    // Gera o arquivo .xlsx e dispara o download
-    const nomeArquivo = `Relatorio_Chamados_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.xlsx`;
-    XLSX.writeFile(workbook, nomeArquivo);
-});
-
-// Delegação de eventos para os botões de ação nos cards
-document.querySelector('.categorias-container').addEventListener('click', (e) => {
-    const target = e.target;
-
-    // Ação 1: Visualizar o anexo (tratada com prioridade)
-    if (target.classList.contains('anexo-link')) {
-        // Verifica se é um anexo interno (com data-id) e não um link externo
-        if (target.dataset.id && !target.getAttribute('href').startsWith('http')) {
-            e.preventDefault(); // Impede que o link '#' navegue
-            const chamadoId = target.dataset.id;
-            const chamadoCompleto = todosOsChamados.find(c => c.id === chamadoId);
-    
-            if (chamadoCompleto && chamadoCompleto.anexoBase64) {
-                const tipoAnexo = chamadoCompleto.anexoInfo?.tipo || '';
-    
-                if (tipoAnexo.startsWith('image/')) {
-                    // Se for imagem, abre no modal
-                    abrirModalAnexo(chamadoCompleto.anexoBase64);
-                } else {
-                    // Se for PDF ou outro tipo, abre em nova aba
-                    window.open(chamadoCompleto.anexoBase64, '_blank');
-                }
-            }
-        }
-        return; // Encerra a execução aqui, pois a ação de anexo já foi tratada.
-    }
-
-    // Ações 2, 3, 4... (Alterar, Remover, Reabrir)
-    if (!target.dataset.id) return;
-
-    if (target.classList.contains('btn-remover')) {
-        chamadoIdParaAcao = target.dataset.id; // Armazena o ID para a ação de exclusão
-        modalConfirmacao.style.display = 'flex';
-    }
-
-    if (target.classList.contains('btn-status')) {
-        const card = target.closest('.chamado-card');
-        chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
-        
-        selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
-        const statusNormalizado = (chamadoAtualParaStatus.status || '').toLowerCase();
-        textoResolucao.value = chamadoAtualParaStatus.resolucao?.descricao || '';
-        campoResolucao.style.display = statusNormalizado === 'resolvido' ? 'block' : 'none';
-        textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
-        campoPeca.style.display = statusNormalizado === 'aguardando-peça' ? 'block' : 'none';
-        validarFormStatus(); // Valida o formulário ao abrir
-        modalStatus.style.display = 'flex';
-    }
-
-    if (target.classList.contains('btn-reabrir')) {
-        const chamadoId = target.dataset.id;
-        const chamadoRef = doc(db, "chamados", chamadoId);
-        updateDoc(chamadoRef, {
-            status: 'pendente',
-            resolucao: null, // Limpa a resolução anterior
-            // CORREÇÃO: Padroniza a estrutura do objeto de histórico
-            historico: arrayUnion({
-                descricao: 'Chamado reaberto pelo painel.',
-                timestamp: new Date(),
-                usuario: auth.currentUser.email
-            })
-        }).then(() => {
-            console.log(`Chamado ${chamadoId} reaberto.`);
-        });
-    }
-});
-
-// Ações do Modal de Exclusão
-btnModalCancelar.addEventListener('click', () => {
-    modalConfirmacao.style.display = 'none';
-    chamadoIdParaAcao = null;
-});
-
-btnModalConfirmar.addEventListener('click', async () => {
-    if (chamadoIdParaAcao) {
-        await deleteDoc(doc(db, "chamados", chamadoIdParaAcao));
-        modalConfirmacao.style.display = 'none';
-        chamadoIdParaAcao = null;
-    }
-});
-
-// CORREÇÃO: Funções para controlar o Modal de Anexo
-function abrirModalAnexo(src) {
-    modalAnexo.style.display = "block";
-    imgAnexoViewer.src = src;
-}
-
-// Fecha o modal ao clicar no 'X'
-closeViewerBtn.onclick = function() {
-    modalAnexo.style.display = "none";
-}
-
-
-// Ações do Modal de Status
-btnStatusCancelar.addEventListener('click', () => {
-    modalStatus.style.display = 'none';
-    campoResolucao.style.display = 'none';
-    campoPeca.style.display = 'none';
-    chamadoIdParaAcao = null;
-    chamadoAtualParaStatus = null;
-});
+// --- SOLUÇÃO: Função que estava faltando ---
 function validarFormStatus() {
-    // CORREÇÃO: Garante que os campos de texto sejam exibidos ou ocultados
+    // Garante que os campos de texto sejam exibidos ou ocultados
     // de acordo com o status selecionado ANTES de validar.
-    const status = selectStatus.value.toLowerCase(); // Normaliza para minúsculas
+    const status = selectStatus.value.toLowerCase();
     if (status === 'resolvido') {
         campoResolucao.style.display = 'block';
         campoPeca.style.display = 'none';
@@ -675,6 +792,8 @@ function validarFormStatus() {
         campoResolucao.style.display = 'none';
         campoPeca.style.display = 'none';
     }
+
+    // Valida se o botão de salvar deve estar ativo
     const statusSelecionado = selectStatus.value;
     const resolucaoTexto = textoResolucao.value.trim();
     const pecaTexto = textoPeca.value.trim();
@@ -688,65 +807,79 @@ function validarFormStatus() {
     }
 }
 
-selectStatus.addEventListener('change', () => {
-    validarFormStatus();
-});
+/**
+ * Converte um objeto de data (seja Timestamp do Firebase ou objeto JSON) para um objeto Date de JS.
+ * @param {object | {seconds: number, nanoseconds: number}} dateObject O objeto de data.
+ * @returns {Date}
+ */
+function toJsDate(dateObject) {
+    if (!dateObject) return new Date(); // Retorna data atual se for nulo
+    if (dateObject.toDate) return dateObject.toDate(); // Já é um Timestamp
+    if (dateObject.seconds) return new Date(dateObject.seconds * 1000); // É um objeto vindo de JSON
+    return new Date(dateObject); // Tenta converter como string
+}
 
-textoResolucao.addEventListener('input', validarFormStatus);
-textoPeca.addEventListener('input', validarFormStatus);
 
+// --- MELHORIA: Funções para o Modal de Histórico ---
+function criarModalHistorico() {
+    const modalHtml = `
+        <div id="modalHistorico" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Histórico do Chamado</h2>
+                    <button id="btnHistoricoFechar" class="close-button">&times;</button>
+                </div>
+                <div class="modal-body" id="historicoConteudo">
+                    <!-- O conteúdo do histórico será inserido aqui -->
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-formStatus.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    // CORREÇÃO: Usa o ID do 'chamadoAtualParaStatus' que já está em memória,
-    // em vez de depender de uma variável que pode não estar definida.
-    if (chamadoAtualParaStatus && chamadoAtualParaStatus.id) {
-        const novoStatus = selectStatus.value;
-        const chamadoId = chamadoAtualParaStatus.id;
-        const chamadoRef = doc(db, "chamados", chamadoId);
+    const modal = document.getElementById('modalHistorico');
+    const btnFechar = document.getElementById('btnHistoricoFechar');
 
-        // CORREÇÃO: Para contornar a limitação do serverTimestamp com arrayUnion,
-        // lemos o documento, atualizamos o array em memória e salvamos de volta.
-        const docSnap = await getDoc(chamadoRef);
-        const chamadoAtual = docSnap.data();
-        const novoHistorico = chamadoAtual.historico || [];
-        // CORREÇÃO: Padroniza a estrutura do objeto de histórico
-        novoHistorico.push({
-            descricao: `Status alterado para: ${novoStatus}`,
-            timestamp: new Date(),
-            usuario: auth.currentUser.email
-        });
-
-        let dadosParaAtualizar = { // Objeto base com as atualizações padrão
-            status: novoStatus,
-            historico: novoHistorico,
-            // Limpa campos antigos para evitar dados inconsistentes
-            ...(chamadoAtual.resolucao && { resolucao: null }),
-            ...(chamadoAtual.pecaAguardando && { pecaAguardando: null })
-        };
-
-        if (novoStatus === 'resolvido') {
-            if (textoResolucao.value.trim() === '') {
-                alert('Por favor, descreva como o problema foi resolvido.');
-                return;
-            }
-            dadosParaAtualizar = {
-                ...dadosParaAtualizar,
-                resolucao: {
-                    descricao: textoResolucao.value.trim(),
-                    data: serverTimestamp()
-                }
-            };
-        } else if (novoStatus === 'aguardando-peça') {
-            if (textoPeca.value.trim() === '') {
-                alert('Por favor, informe qual peça está sendo aguardada.');
-                return;
-            }
-            dadosParaAtualizar.pecaAguardando = textoPeca.value.trim(); // Adiciona o campo diretamente
+    btnFechar.addEventListener('click', () => modal.style.display = 'none');
+    modal.addEventListener('click', (e) => {
+        if (e.target.id === 'modalHistorico') {
+            modal.style.display = 'none';
         }
+    });
+}
 
-        await updateDoc(chamadoRef, dadosParaAtualizar);
-        modalStatus.style.display = 'none';
-        chamadoAtualParaStatus = null;
+function abrirModalHistorico(chamado) {
+    const modal = document.getElementById('modalHistorico');
+    const conteudo = document.getElementById('historicoConteudo');
+
+    let historicoHtml = `
+        <p><strong>Protocolo:</strong> ${chamado.protocolo || 'N/A'}</p>
+        <p><strong>Solicitante:</strong> ${chamado.nome}</p>
+        <hr>
+        <ul class="historico-lista">
+    `;
+
+    // Adiciona o evento de abertura como o primeiro item
+    historicoHtml += `
+        <li>
+            <div class="historico-item">
+                <span class="historico-data">${toJsDate(chamado.dataAbertura).toLocaleString('pt-BR')}</span>
+                <span class="historico-desc"><strong>Chamado Aberto</strong></span>
+            </div>
+        </li>`;
+
+    if (chamado.historico && chamado.historico.length > 0) {
+        chamado.historico.forEach(item => {
+            historicoHtml += `
+                <li>
+                    <div class="historico-item">
+                        <span class="historico-data">${toJsDate(item.timestamp).toLocaleString('pt-BR')}</span>
+                        <span class="historico-desc">${item.descricao} por <strong>${item.usuario || 'Sistema'}</strong></span>
+                    </div>
+                </li>`;
+        });
     }
-});
+    historicoHtml += '</ul>';
+    conteudo.innerHTML = historicoHtml;
+    modal.style.display = 'flex';
+}

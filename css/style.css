@@ -376,10 +376,45 @@ button:disabled {
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
-    background-color: var(--border-color);
-    color: var(--text-primary);
+    /* As cores de fundo e texto agora são definidas abaixo para cada tema */
     white-space: nowrap;
     align-self: flex-start;
+}
+
+/* --- CORREÇÃO: Cores das Tags de Status (Tema Claro) --- */
+.status-tag {
+    color: #09090b; /* Garante texto escuro para alto contraste */
+    font-weight: 500;
+}
+
+.status-tag.pendente {
+    background-color: #fef08a; /* Amarelo claro */
+}
+
+.status-tag.em-andamento {
+    background-color: #93c5fd; /* Azul claro */
+}
+
+.status-tag.aguardando-peça {
+    background-color: #fed7aa; /* Laranja claro */
+}
+
+.status-tag.resolvido {
+    background-color: #a7f3d0; /* Verde claro */
+}
+
+/* --- CORREÇÃO: Cores das Tags de Status (Tema Escuro) --- */
+body.dark-theme .status-tag.pendente {
+    background-color: #fde047; /* Amarelo vibrante */
+}
+body.dark-theme .status-tag.em-andamento {
+    background-color: #60a5fa; /* Azul vibrante */
+}
+body.dark-theme .status-tag.aguardando-peça {
+    background-color: #f97316; /* Laranja vibrante */
+}
+body.dark-theme .status-tag.resolvido {
+    background-color: #4ade80; /* Verde vibrante */
 }
 
 .empty-state {
@@ -1076,15 +1111,18 @@ button:disabled {
     height: 24px;
 }
 
-/* Oculta o ícone do sol no tema dark */
-.dark-theme .theme-switcher-btn .icon-sun {
-    display: none;
-}
-
-/* Oculta o ícone da lua no tema light (padrão) */
+/* No tema claro (padrão), mostra a lua e esconde o sol */
 .theme-switcher-btn .icon-sun {
     display: none;
 }
+.theme-switcher-btn .icon-moon {
+    display: block;
+}
+
+/* No tema escuro, mostra o sol e esconde a lua */
 .dark-theme .theme-switcher-btn .icon-moon {
+    display: none;
+}
+.dark-theme .theme-switcher-btn .icon-sun {
     display: block;
 }
