@@ -561,7 +561,18 @@ function atualizarGraficos(chamados) {
             const entradaResolucao = [...chamado.historico].reverse().find(h => h && h.descricao && h.descricao.includes('resolvido'));
             // CORREÇÃO: Usa o nome do usuário (displayName) se existir, senão, o email.
             if (entradaResolucao && entradaResolucao.usuario && entradaResolucao.usuario !== 'Sistema') {
-                const nomeUsuario = entradaResolucao.usuario; // O campo 'usuario' agora guarda o nome
+                const emailUsuario = entradaResolucao.usuario; // O campo 'usuario' guarda o nome ou email
+
+                // MELHORIA: Mapeamento centralizado de e-mails para nomes personalizados.
+                const mapaDeNomes = {
+                    'mguimarcos39@gmail.com': '[DEV] Marcos Guilherme',
+                    'amaro.ams@gmail.com': 'Amaro',
+                    'juvenal67il@gmail.com': 'Juvenal Lima'
+                };
+
+                // Usa o nome do mapa se existir, senão, usa o e-mail original.
+                const nomeUsuario = mapaDeNomes[emailUsuario] || emailUsuario;
+
                 acc[nomeUsuario] = (acc[nomeUsuario] || 0) + 1;
             }
             return acc;
