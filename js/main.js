@@ -1,6 +1,13 @@
 // js/main.js
 import { db, dbFunctions } from './firebase-init.js';
 
+/* --- Constantes ---
+ * O Firestore tem um limite máximo de 1 MiB (1.048.576 bytes) por documento.
+ * A codificação Base64 aumenta o tamanho do arquivo em ~33%.
+ * Para evitar erros, o limite para o arquivo original deve ser menor que 1MB. 700KB é um valor seguro.
+ */
+const MAX_FILE_SIZE_BYTES = 700 * 1024; // 700KB
+
 const { collection, addDoc, serverTimestamp } = dbFunctions;
 
 const formAberturaChamado = document.getElementById('formAberturaChamado');
@@ -27,16 +34,6 @@ function fileToBase64(file) {
 }
 
 /**
- * Gera um número de protocolo único.
- * @returns {string} O protocolo gerado.
- */
-function gerarProtocolo() {
-    const ano = new Date().getFullYear();
-    const aleatorio = Math.random().toString(36).substring(2, 7).toUpperCase();
-    return `CH-${ano}-${aleatorio}`;
-}
-
-/**
  * Exibe uma mensagem no topo da página.
  * @param {string} message A mensagem a ser exibida.
  * @param {string} type O tipo da mensagem ('success' ou 'error').
@@ -46,6 +43,32 @@ function showTopMessage(message, type) {
     topMessageEl.textContent = message;
     topMessageEl.style.display = 'block';
     window.scrollTo(0, 0); // Rola para o topo para ver a mensagem
+}
+
+/**
+ * Processa o anexo (arquivo ou URL) e retorna os dados para o Firestore.
+ * @param {File} file O arquivo do input.
+ * @param {string} url A URL do input.
+ * @returns {Promise<Object>} Um objeto com os dados do anexo.
+ */
+async function processarAnexo(file, url) {
+    const anexoData = {};
+
+    if (file) {
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            throw new Error(`O arquivo excede o limite de ${Math.round(MAX_FILE_SIZE_BYTES / 1024)}KB. Por favor, use um link externo.`);
+        }
+        anexoData.anexoBase64 = await fileToBase64(file);
+        anexoData.anexoInfo = {
+            nome: file.name,
+            tipo: file.type,
+            tamanho: file.size
+        };
+    } else if (url) {
+        anexoData.anexoUrl = url;
+    }
+
+    return anexoData;
 }
 
 // Atualiza o nome do arquivo no label do input de anexo
@@ -72,40 +95,29 @@ formAberturaChamado.addEventListener('submit', async (e) => {
     const anexoUrl = document.getElementById('anexoUrl').value;
     const anexoFile = anexoInput.files[0];
 
-    const protocolo = gerarProtocolo();
-    const chamadoData = {
-        protocolo,
-        nome,
-        setor,
-        problema,
-        urgencia,
-        status: 'pendente',
-        dataAbertura: serverTimestamp(),
-        historico: [{
-            timestamp: new Date(),
-            descricao: 'Chamado aberto.',
-            usuario: 'Sistema'
-        }]
-    };
-
     try {
-        // Lida com o anexo
-        if (anexoFile) {
-            if (anexoFile.size > 750 * 1024) { // Limite de 750KB
-                throw new Error('O arquivo anexado excede o limite de 750KB. Por favor, use um link externo.');
-            }
-            chamadoData.anexoBase64 = await fileToBase64(anexoFile);
-            chamadoData.anexoInfo = {
-                nome: anexoFile.name,
-                tipo: anexoFile.type,
-                tamanho: anexoFile.size
-            };
-        } else if (anexoUrl) {
-            chamadoData.anexoUrl = anexoUrl;
-        }
+        const anexoData = await processarAnexo(anexoFile, anexoUrl);
+
+        const chamadoData = {
+            nome,
+            setor,
+            problema,
+            urgencia,
+            status: 'pendente',
+            dataAbertura: serverTimestamp(),
+            historico: [{
+                timestamp: serverTimestamp(), // Usando serverTimestamp para consistência
+                descricao: 'Chamado aberto.',
+                usuario: 'Sistema'
+            }],
+            ...anexoData // Adiciona os dados do anexo ao chamado
+        };
 
         // Adiciona o chamado ao Firestore
-        await addDoc(collection(db, "chamados"), chamadoData);
+        const docRef = await addDoc(collection(db, "chamados"), chamadoData);
+
+        // O ID do documento agora é o nosso protocolo único
+        const protocolo = docRef.id;
 
         // Exibe a mensagem de sucesso
         formAberturaChamado.style.display = 'none';
@@ -115,7 +127,6 @@ formAberturaChamado.addEventListener('submit', async (e) => {
         document.querySelector('.form-header').style.display = 'none';
 
     } catch (error) {
-        console.error("Erro ao abrir chamado: ", error);
         showTopMessage(`Ocorreu um erro ao abrir seu chamado: ${error.message}`, 'error');
         
         // Reabilita o botão em caso de erro

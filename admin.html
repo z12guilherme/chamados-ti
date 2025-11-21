@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Lista de Chamados</title>
+    <link rel="stylesheet" href="css/style.css"> <!-- Reutilizando seu CSS existente -->
+    <style>
+        /* Estilos adicionais para a página de admin */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-header">
+            <h2>Painel de Chamados</h2>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Protocolo</th>
+                    <th>Nome</th>
+                    <th>Setor</th>
+                    <th>Problema</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody id="chamados-table-body">
+                <!-- As linhas dos chamados serão inseridas aqui pelo JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>

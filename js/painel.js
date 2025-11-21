@@ -480,7 +480,7 @@ function criarCardChamado(chamado) {
     card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
     card.dataset.id = id;
     card.dataset.status = status; // OTIMIZAÇÃO: Adiciona o status ao dataset para fácil acesso
-    card.dataset.chamado = JSON.stringify(chamado);
+    // card.dataset.chamado = JSON.stringify(chamado); // MELHORIA: Removido para economizar memória
 
     card.innerHTML = `
         <div class="card-header">
@@ -626,7 +626,8 @@ function adicionarEventListeners() {
 
         if (target.classList.contains('btn-status')) {
             const card = target.closest('.chamado-card');
-            chamadoAtualParaStatus = JSON.parse(card.dataset.chamado);
+            // MELHORIA: Busca o chamado pelo ID em vez de usar o dataset
+            chamadoAtualParaStatus = todosOsChamados.find(c => c.id === card.dataset.id);
 
             selectStatus.value = chamadoAtualParaStatus.status || 'Pendente';
             const statusNormalizado = (chamadoAtualParaStatus.status || '').toLowerCase();
@@ -656,7 +657,8 @@ function adicionarEventListeners() {
 
         if (target.classList.contains('btn-historico')) {
             const card = target.closest('.chamado-card');
-            const chamadoData = JSON.parse(card.dataset.chamado);
+            // MELHORIA: Busca o chamado pelo ID em vez de usar o dataset
+            const chamadoData = todosOsChamados.find(c => c.id === card.dataset.id);
             abrirModalHistorico(chamadoData);
         }
     });
@@ -746,28 +748,48 @@ function adicionarEventListeners() {
     });
 }
 
+/**
+ * MELHORIA: Renderiza os chamados nas listas corretas a partir de um array.
+ * @param {Array} chamadosParaRenderizar - O array de chamados a serem exibidos.
+ */
+function renderizarChamados(chamadosParaRenderizar) {
+    // 1. Limpa as listas atuais, mantendo os títulos
+    listaPendentesEl.innerHTML = '<h4><i class="fas fa-hourglass-start"></i> Pendentes</h4>';
+    listaEmAndamentoEl.innerHTML = '<h4><i class="fas fa-tasks"></i> Em Andamento</h4>';
+    listaAguardandoPecaEl.innerHTML = '<h4><i class="fas fa-tools"></i> Aguardando Peça</h4>';
+    listaResolvidosEl.innerHTML = '<h4><i class="fas fa-check-circle"></i> Resolvidos</h4>';
+
+    // 2. Renderiza apenas os chamados filtrados
+    chamadosParaRenderizar.forEach(chamado => {
+        const card = criarCardChamado(chamado);
+        adicionarCardNaLista(card, (chamado.status || 'Pendente').toLowerCase());
+    });
+
+    // 3. Atualiza as mensagens de "lista vazia"
+    verificarEmptyStates();
+}
+
 function filtrarChamados() {
     const termo = document.getElementById('filtro').value.toLowerCase().trim();
     const statusFiltro = document.getElementById('filtroStatus').value;
     const urgenciaFiltro = document.getElementById('filtroUrgencia').value;
-    const todosOsCards = document.querySelectorAll('.chamado-card');
 
-    todosOsCards.forEach(card => {
-        const chamadoData = JSON.parse(card.dataset.chamado);
-
+    // MELHORIA: Filtra o array em memória em vez de manipular o DOM
+    const chamadosFiltrados = todosOsChamados.filter(chamado => {
         const textoParaBuscar = [
-            chamadoData.protocolo || '',
-            chamadoData.nome || '',
-            chamadoData.setor || '',
-            chamadoData.problema || ''
+            chamado.protocolo || '',
+            chamado.nome || '',
+            chamado.setor || '',
+            chamado.problema || ''
         ].join(' ').toLowerCase();
         const matchTexto = textoParaBuscar.includes(termo);
-
-        const matchStatus = !statusFiltro || (chamadoData.status || '').toLowerCase() === statusFiltro.toLowerCase();
-        const matchUrgencia = !urgenciaFiltro || (chamadoData.urgencia || '').toLowerCase() === urgenciaFiltro;
-
-        card.style.display = matchTexto && matchStatus && matchUrgencia ? 'block' : 'none';
+        const matchStatus = !statusFiltro || (chamado.status || '').toLowerCase() === statusFiltro.toLowerCase();
+        const matchUrgencia = !urgenciaFiltro || (chamado.urgencia || '').toLowerCase() === urgenciaFiltro;
+        return matchTexto && matchStatus && matchUrgencia;
     });
+
+    // Renderiza apenas os chamados que passaram no filtro
+    renderizarChamados(chamadosFiltrados);
 }
 
 function limparFiltros() {
@@ -775,6 +797,8 @@ function limparFiltros() {
     document.getElementById('filtroStatus').value = '';
     document.getElementById('filtroUrgencia').value = '';
     filtrarChamados();
+    // Ao limpar, renderiza todos os chamados carregados novamente
+    renderizarChamados(todosOsChamados);
 }
 
 // --- SOLUÇÃO: Função que estava faltando ---
