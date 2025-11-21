@@ -19,6 +19,7 @@
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
     --border-radius-lg: 12px;
+    --illustration-bg: linear-gradient(160deg, rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0));
 }
 
 /* Tema Dark (Tokyo Night) */
@@ -36,6 +37,7 @@ body.dark-theme {
     
     --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+    --illustration-bg: linear-gradient(160deg, rgba(122, 162, 247, 0.08), rgba(122, 162, 247, 0));
 }
 
 body {
@@ -45,11 +47,71 @@ body {
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
+}
+
+/* NOVO: Layout principal da página */
+.page-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr; /* Coluna da ilustração menor que a do formulário */
+    min-height: 100vh;
+    width: 100%;
+}
+
+.illustration-side {
+    background: var(--illustration-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    text-align: center;
+    border-right: 1px solid var(--border-color);
+}
+
+.illustration-content h2 {
+    font-size: 1.8rem;
+    color: var(--text-primary);
+    margin-top: 20px;
+}
+
+.illustration-content p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin: 10px auto 40px;
+}
+
+.illustration-logo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: contain;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+
+.footer-links {
+    margin-top: 40px;
+}
+
+.footer-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+    margin: 0 15px;
+}
+.footer-links a:hover {
+    color: var(--text-primary);
+}
+
+.form-side {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    overflow-y: auto;
 }
 
 .container {
@@ -58,9 +120,16 @@ body {
     background-color: var(--surface-color);
     padding: 40px;
     margin: 40px 20px;
+    margin: 40px auto;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.5s ease-out;
+}
+
+/* NOVO: Wrapper para o formulário */
+.form-wrapper {
+    width: 100%;
+    max-width: 550px;
 }
 
 h1, h2 {
@@ -78,15 +147,6 @@ h1, h2 {
 .form-header {
     text-align: left;
     margin-bottom: 30px;
-}
-
-.form-logo {
-    width: 200px; /* Tamanho aumentado */
-    height: 200px;
-    object-fit: contain;
-    margin: 0 auto 25px; /* Centralizado */
-    display: block;
-    border-radius: 50%;
 }
 
 .form-header h1 {
@@ -207,6 +267,11 @@ button:hover {
     transform: translateY(-2px);
 }
 
+button.btn-secondary {
+    background-color: transparent;
+    color: var(--primary-color);
+}
+
 button:disabled {
     background-color: #a0c7f1;
     cursor: not-allowed;
@@ -321,23 +386,7 @@ button:disabled {
 }
 
 .footer {
-    width: 100%;
-    margin-top: auto;
-    padding: 20px;
-    box-sizing: border-box;
-    text-align: center;
-    color: #787c99;
-    font-size: 0.9em;
-}
-
-.footer a {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-.footer a:hover {
-    color: var(--text-primary);
+    display: none; /* Oculto, pois os links foram para a coluna da ilustração */
 }
 
 /* Animação de Loading (adaptada para tema escuro) */
@@ -1078,9 +1127,9 @@ body.dark-theme .status-tag.resolvido {
 /* == ESTILOS PARA O SELETOR DE TEMA (NOVO) == */
 /* ============================================= */
 .theme-switcher {
-    position: fixed;
-    top: 20px;
-    right: 20px;
+    position: absolute;
+    top: 30px;
+    right: 40px;
     z-index: 1000;
 }
 

@@ -10,109 +10,122 @@
 </head>
 
 <body>
-    <!-- Seletor de Tema -->
-    <div class="theme-switcher">
-        <button class="theme-switcher-btn" id="theme-toggle">
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        </button>
-    </div>
-
-    <div class="container">
-        <div class="form-header" style="text-align: center;">
-            <img src="assets/logo.jpg" alt="Logo da Empresa" class="form-logo">
-            <h1>📞 Abrir Chamado de T.I.</h1>
-            <p>Descreva seu problema para que possamos ajudar o mais rápido possível.</p>
-        </div>
-        
-        <!-- Área para exibir mensagens de sucesso ou erro -->
-        <div id="topMessage" style="display: none;"></div>
-
-        <form id="formAberturaChamado">
-            <div class="form-group">
-                <label for="nome">Seu Nome Completo:</label>
-                <div class="input-wrapper">
-                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <input type="text" id="nome" name="nome" required placeholder="Ex: João da Silva">
+    <div class="page-wrapper">
+        <!-- Coluna da Esquerda (Apresentação) -->
+        <div class="illustration-side">
+            <div class="illustration-content">
+                <img src="assets/logo.jpg" alt="Logo da Empresa" class="illustration-logo">
+                <h2>Plataforma de Suporte Técnico</h2>
+                <p>Agilidade e eficiência para resolver suas demandas de T.I.</p>
+                <div class="footer-links">
+                    <a href="consulta.html">Consultar Chamado</a>
+                    <a href="login.html" target="_blank">Acesso Admin</a>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label for="setor">Seu Setor:</label>
-                <div class="input-wrapper">
-                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="9" y1="9" x2="9" y2="9.01"></line>
-                        <line x1="15" y1="9" x2="15" y2="9.01"></line>
-                        <line x1="9" y1="15" x2="9" y2="15.01"></line>
-                        <line x1="15" y1="15" x2="15" y2="15.01"></line>
-                    </svg>
-                    <input type="text" id="setor" name="setor" required placeholder="Ex: Financeiro, Vendas, RH...">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="urgencia">Nível de Urgência:</label>
-                <div class="urgency-options-container">
-                    <label class="urgency-option urgencia-baixa">
-                        <input type="radio" name="urgencia" value="baixa" checked>
-                        <span>Baixa</span>
-                    </label>
-                    <label class="urgency-option urgencia-media">
-                        <input type="radio" name="urgencia" value="media">
-                        <span>Média</span>
-                    </label>
-                    <label class="urgency-option urgencia-alta">
-                        <input type="radio" name="urgencia" value="alta">
-                        <span>Alta</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="problema">Descreva o problema:</label>
-                <textarea id="problema" name="problema" rows="5" required placeholder="Ex: Meu computador não liga e faz um barulho estranho."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Anexo (Opcional)</label>
-                <p class="form-hint">
-                    Para arquivos pequenos (até 750KB), anexe diretamente. <br>
-                    Para arquivos maiores, hospede no Google Drive e cole o link abaixo.
-                </p>
-
-                <label for="anexo" class="sub-label">Anexar arquivo diretamente:</label>
-                <div class="input-file-wrapper">
-                    <label for="anexo" class="input-file-label" id="anexoLabel">Clique para selecionar um arquivo...</label>
-                    <input type="file" id="anexo" class="input-file" accept="image/*,application/pdf" style="display:none;">
-                </div>
-
-                <div class="anexo-separator">ou</div>
-
-                <label for="anexoUrl" class="sub-label">Colar link de anexo externo:</label>
-                <input type="url" id="anexoUrl" name="anexoUrl" placeholder="https://drive.google.com/..." class="input-file">
-            </div>
-
-            <button type="submit" id="btnSubmit">Abrir Chamado</button>
-        </form>
-
-        <!-- Mensagem de sucesso (inicialmente oculta) -->
-        <div id="successMessage" class="success-container" style="display: none;">
-            <h2>✅ Chamado Aberto com Sucesso!</h2>
-            <p>Seu atendimento foi registrado. Anote o número do seu protocolo para consultas futuras:</p>
-            <div class="protocol-display" id="newProtocolNumber"></div>
-            <p>Você pode <a id="linkConsulta" href="consulta.html">consultar o andamento aqui</a>.</p>
-            <button onclick="window.location.reload()" class="btn-secondary">Abrir Novo Chamado</button>
         </div>
 
-        <div id="errorMessage" class="message" style="display: none;"></div>
-    </div>
+        <!-- Coluna do Formulário (Direita) -->
+        <div class="form-side">
+            <div class="form-wrapper">
+                <!-- Seletor de Tema -->
+                <div class="theme-switcher">
+                    <button class="theme-switcher-btn" id="theme-toggle">
+                        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>
 
-    <div class="footer">
-        <p>&copy; 2025 Rede DMI | Sistema de Chamados T.I. | <a href="consulta.html">Consultar Chamado</a> | <a href="login.html" target="_blank">Acesso Admin</a></p>
+                <div class="form-header">
+                    <h1>📞 Abrir Chamado de T.I.</h1>
+                    <p>Descreva seu problema para que possamos ajudar o mais rápido possível.</p>
+                </div>
+                
+                <!-- Área para exibir mensagens de sucesso ou erro -->
+                <div id="topMessage" style="display: none;"></div>
+
+                <form id="formAberturaChamado">
+                    <div class="form-group">
+                        <label for="nome">Seu Nome Completo:</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <input type="text" id="nome" name="nome" required placeholder="Ex: João da Silva">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="setor">Seu Setor:</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="9" y1="9" x2="9" y2="9.01"></line>
+                                <line x1="15" y1="9" x2="15" y2="9.01"></line>
+                                <line x1="9" y1="15" x2="9" y2="15.01"></line>
+                                <line x1="15" y1="15" x2="15" y2="15.01"></line>
+                            </svg>
+                            <input type="text" id="setor" name="setor" required placeholder="Ex: Financeiro, Vendas, RH...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="urgencia">Nível de Urgência:</label>
+                        <div class="urgency-options-container">
+                            <label class="urgency-option urgencia-baixa">
+                                <input type="radio" name="urgencia" value="baixa" checked>
+                                <span>Baixa</span>
+                            </label>
+                            <label class="urgency-option urgencia-media">
+                                <input type="radio" name="urgencia" value="media">
+                                <span>Média</span>
+                            </label>
+                            <label class="urgency-option urgencia-alta">
+                                <input type="radio" name="urgencia" value="alta">
+                                <span>Alta</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="problema">Descreva o problema:</label>
+                        <textarea id="problema" name="problema" rows="5" required placeholder="Ex: Meu computador não liga e faz um barulho estranho."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Anexo (Opcional)</label>
+                        <p class="form-hint">
+                            Para arquivos pequenos (até 700KB), anexe diretamente. <br>
+                            Para arquivos maiores, hospede no Google Drive e cole o link abaixo.
+                        </p>
+
+                        <label for="anexo" class="sub-label">Anexar arquivo diretamente:</label>
+                        <div class="input-file-wrapper">
+                            <label for="anexo" class="input-file-label" id="anexoLabel">Clique para selecionar um arquivo...</label>
+                            <input type="file" id="anexo" class="input-file" accept="image/*,application/pdf" style="display:none;">
+                        </div>
+
+                        <div class="anexo-separator">ou</div>
+
+                        <label for="anexoUrl" class="sub-label">Colar link de anexo externo:</label>
+                        <input type="url" id="anexoUrl" name="anexoUrl" placeholder="https://drive.google.com/..." class="input-file">
+                    </div>
+
+                    <button type="submit" id="btnSubmit">Abrir Chamado</button>
+                </form>
+
+                <!-- Mensagem de sucesso (inicialmente oculta) -->
+                <div id="successMessage" class="success-container" style="display: none;">
+                    <h2>✅ Chamado Aberto com Sucesso!</h2>
+                    <p>Seu atendimento foi registrado. Anote o número do seu protocolo para consultas futuras:</p>
+                    <div class="protocol-display" id="newProtocolNumber"></div>
+                    <p>Você pode <a id="linkConsulta" href="consulta.html">consultar o andamento aqui</a>.</p>
+                    <button onclick="window.location.reload()" class="btn-secondary">Abrir Novo Chamado</button>
+                </div>
+
+                <div id="errorMessage" class="message" style="display: none;"></div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/index.js"></script>

@@ -1,37 +1,39 @@
 // js/login.js
-import { login } from './auth.js';
+import { auth, authFunctions } from './firebase-init.js';
+
+const { signInWithEmailAndPassword } = authFunctions;
 
 const formLogin = document.getElementById('formLogin');
+const emailInput = document.getElementById('email');
+const senhaInput = document.getElementById('senha');
 const mensagemEl = document.getElementById('mensagem');
 const btnLogin = document.getElementById('btnLogin');
 
 formLogin.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById('email').value;
-    const senha = document.getElementById('senha').value;
-
     btnLogin.disabled = true;
-    btnLogin.textContent = 'Verificando...';
+    btnLogin.textContent = 'Entrando...';
     mensagemEl.style.display = 'none';
 
-    try {
-        await login(email, senha);
-        // Se o login for bem-sucedido, redireciona para o painel
-        window.location.href = 'painel.html';
+    const email = emailInput.value.trim();
+    const senha = senhaInput.value.trim();
 
+    try {
+        await signInWithEmailAndPassword(auth, email, senha);
+        // Redireciona para o painel de chamados em caso de sucesso
+        window.location.href = 'painel.html';
     } catch (error) {
         console.error("Erro de autenticação:", error.code);
-        let mensagemErro = '❌ Ocorreu um erro ao tentar fazer login.';
-        // As versões mais recentes do Firebase SDK retornam 'auth/invalid-credential' tanto para email não encontrado quanto para senha incorreta.
-        if (error.code === 'auth/invalid-credential') {
-            mensagemErro = '❌ Credenciais inválidas. Verifique seu email e senha.';
+        let mensagemErro = 'Ocorreu um erro ao tentar fazer login.';
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            mensagemErro = 'E-mail ou senha inválidos. Por favor, tente novamente.';
         }
         
-        mensagemEl.className = 'message error';
         mensagemEl.textContent = mensagemErro;
+        mensagemEl.className = 'message error';
         mensagemEl.style.display = 'block';
-    } finally {
+
         btnLogin.disabled = false;
         btnLogin.textContent = 'Entrar';
     }
