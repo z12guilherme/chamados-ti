@@ -823,8 +823,7 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
 
 .graficos-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Cria uma grade 2x2 */
-    display: flex; /* Muda para flexbox para criar uma fileira */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Grade responsiva */
     overflow-x: auto; /* Permite rolagem horizontal se os gráficos não couberem */
     gap: 25px;
     padding-bottom: 15px; /* Espaço para a barra de rolagem não cortar a sombra */

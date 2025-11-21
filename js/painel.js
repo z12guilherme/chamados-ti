@@ -17,6 +17,12 @@ let graficoStatusInstance = null;
 let graficoSetoresInstance = null;
 let graficoUrgenciaInstance = null;
 let graficoMensalInstance = null; // NOVO: Instância para o gráfico mensal
+let graficoTempoResolucaoInstance = null; // SUGESTÃO: Instância para o gráfico de tempo de resolução
+let graficoDiaSemanaInstance = null; // SUGESTÃO: Instância para o gráfico de dia da semana
+let graficoPorTecnicoInstance = null; // SUGESTÃO 4
+let graficoIdadeBacklogInstance = null; // SUGESTÃO 5
+let graficoReaberturasInstance = null; // SUGESTÃO 6
+let graficoResolucaoRapidaInstance = null; // SUGESTÃO 7
 
 let ultimoDocumentoVisivel = null;
 const CHAMADOS_POR_PAGINA = 25;
@@ -255,6 +261,10 @@ function atualizarGraficos(chamados) {
     const ctxSetores = document.getElementById('graficoSetores').getContext('2d');
     const ctxUrgencia = document.getElementById('graficoUrgencia').getContext('2d');
     const ctxMensal = document.getElementById('graficoMensal').getContext('2d'); // NOVO: Contexto do novo gráfico
+    const ctxTempoResolucao = document.getElementById('graficoTempoResolucao').getContext('2d'); // SUGESTÃO
+    const ctxDiaSemana = document.getElementById('graficoDiaSemana').getContext('2d'); // SUGESTÃO
+    const ctxPorTecnico = document.getElementById('graficoPorTecnico').getContext('2d'); // SUGESTÃO 4
+    const ctxIdadeBacklog = document.getElementById('graficoIdadeBacklog').getContext('2d'); // SUGESTÃO 5
 
     // --- Lógica para os KPIs ---
     const totalChamados = chamados.length;
@@ -463,13 +473,251 @@ function atualizarGraficos(chamados) {
             scales: { y: { beginAtZero: true, ticks: { color: corTexto }, grid: { color: corGrid } }, x: { ticks: { color: corTexto }, grid: { color: 'transparent' } } }
         }
     });
+
+    // 5. SUGESTÃO: Gráfico de Tempo Médio de Resolução (em Horas) por Setor
+    const tempoPorSetor = {};
+    const contagemPorSetor = {};
+
+    chamados.filter(c => c.status === 'resolvido' && c.dataAbertura && c.resolucao?.data).forEach(c => {
+        const setor = c.setor || 'Não Informado';
+        const dataAbertura = toJsDate(c.dataAbertura).getTime();
+        const dataResolucao = toJsDate(c.resolucao.data).getTime();
+        const diffHoras = (dataResolucao - dataAbertura) / (1000 * 60 * 60);
+
+        tempoPorSetor[setor] = (tempoPorSetor[setor] || 0) + diffHoras;
+        contagemPorSetor[setor] = (contagemPorSetor[setor] || 0) + 1;
+    });
+
+    const labelsTempoMedio = Object.keys(tempoPorSetor);
+    const dadosTempoMedio = labelsTempoMedio.map(setor => (tempoPorSetor[setor] / contagemPorSetor[setor]).toFixed(2));
+
+    if (graficoTempoResolucaoInstance) graficoTempoResolucaoInstance.destroy();
+    graficoTempoResolucaoInstance = new Chart(ctxTempoResolucao, {
+        type: 'bar',
+        data: {
+            labels: labelsTempoMedio,
+            datasets: [{
+                label: 'Tempo Médio (horas)',
+                data: dadosTempoMedio,
+                backgroundColor: coresGrafico,
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y', // Gráfico de barras horizontais
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Tempo Médio de Resolução (Horas)', color: corTexto, font: { size: 16 } }
+            },
+            scales: {
+                y: { ticks: { color: corTexto }, grid: { color: 'transparent' } },
+                x: { ticks: { color: corTexto }, grid: { color: corGrid } }
+            }
+        }
+    });
+
+    // 6. SUGESTÃO: Gráfico de Chamados por Dia da Semana
+    const diasDaSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    const contagemPorDia = Array(7).fill(0);
+
+    chamados.forEach(chamado => {
+        if (chamado.dataAbertura) {
+            const dia = toJsDate(chamado.dataAbertura).getDay();
+            contagemPorDia[dia]++;
+        }
+    });
+
+    if (graficoDiaSemanaInstance) graficoDiaSemanaInstance.destroy();
+    graficoDiaSemanaInstance = new Chart(ctxDiaSemana, {
+        type: 'bar',
+        data: {
+            labels: diasDaSemana,
+            datasets: [{
+                label: 'Nº de Chamados',
+                data: contagemPorDia,
+                backgroundColor: 'rgba(158, 206, 106, 0.5)',
+                borderColor: 'rgba(158, 206, 106, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Chamados por Dia da Semana', color: corTexto, font: { size: 16 } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: corTexto, stepSize: 1 }, grid: { color: corGrid } },
+                x: { ticks: { color: corTexto }, grid: { color: 'transparent' } }
+            }
+        }
+    });
+
+    // 7. SUGESTÃO: Gráfico de Chamados Resolvidos por Técnico
+    const resolvidosPorTecnico = chamados
+        .filter(c => c.status === 'resolvido' && c.historico)
+        .reduce((acc, chamado) => {
+            // Encontra a última entrada de "resolvido" no histórico para pegar o técnico correto
+            const entradaResolucao = [...chamado.historico].reverse().find(h => h && h.descricao && h.descricao.includes('resolvido'));
+            // CORREÇÃO: Usa o nome do usuário (displayName) se existir, senão, o email.
+            if (entradaResolucao && entradaResolucao.usuario && entradaResolucao.usuario !== 'Sistema') {
+                const nomeUsuario = entradaResolucao.usuario; // O campo 'usuario' agora guarda o nome
+                acc[nomeUsuario] = (acc[nomeUsuario] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+    if (graficoPorTecnicoInstance) graficoPorTecnicoInstance.destroy();
+    graficoPorTecnicoInstance = new Chart(ctxPorTecnico, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(resolvidosPorTecnico),
+            datasets: [{
+                label: 'Nº de Chamados',
+                data: Object.values(resolvidosPorTecnico),
+                backgroundColor: coresGrafico,
+                borderColor: style.getPropertyValue('--surface-color'),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { color: corTexto } },
+                title: { display: true, text: 'Chamados Resolvidos por Técnico', color: corTexto, font: { size: 16 } }
+            }
+        }
+    });
+
+    // 8. SUGESTÃO: Gráfico de Idade dos Chamados Ativos (Backlog)
+    const agora = new Date().getTime();
+    const idadeBacklog = {
+        'Menos de 1 dia': 0,
+        '1 a 3 dias': 0,
+        '4 a 7 dias': 0,
+        'Mais de 7 dias': 0
+    };
+
+    chamados.filter(c => c.status !== 'resolvido').forEach(c => {
+        const dataAbertura = toJsDate(c.dataAbertura).getTime();
+        const diffDias = (agora - dataAbertura) / (1000 * 60 * 60 * 24);
+
+        if (diffDias < 1) {
+            idadeBacklog['Menos de 1 dia']++;
+        } else if (diffDias <= 3) {
+            idadeBacklog['1 a 3 dias']++;
+        } else if (diffDias <= 7) {
+            idadeBacklog['4 a 7 dias']++;
+        } else {
+            idadeBacklog['Mais de 7 dias']++;
+        }
+    });
+
+    if (graficoIdadeBacklogInstance) graficoIdadeBacklogInstance.destroy();
+    graficoIdadeBacklogInstance = new Chart(ctxIdadeBacklog, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(idadeBacklog),
+            datasets: [{
+                label: 'Nº de Chamados Ativos',
+                data: Object.values(idadeBacklog),
+                backgroundColor: [coresGrafico[1], coresGrafico[2], coresGrafico[0], coresGrafico[3]], // Verde, Amarelo, Azul, Vermelho
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Idade dos Chamados Ativos (Backlog)', color: corTexto, font: { size: 16 } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { color: corTexto, stepSize: 1 }, grid: { color: corGrid } },
+                x: { ticks: { color: corTexto }, grid: { color: 'transparent' } }
+            }
+        }
+    });
+
+    // 9. SUGESTÃO: Gráfico de Taxa de Reabertura
+    let chamadosReabertos = 0;
+    const chamadosComResolucao = chamados.filter(c => c.historico && c.historico.some(h => h.descricao.includes('resolvido'))).length;
+
+    chamados.forEach(chamado => {
+        if (chamado.historico && chamado.historico.some(h => h.descricao.includes('reaberto'))) {
+            chamadosReabertos++;
+        }
+    });
+
+    const chamadosNaoReabertos = chamadosComResolucao - chamadosReabertos;
+
+    if (graficoReaberturasInstance) graficoReaberturasInstance.destroy();
+    graficoReaberturasInstance = new Chart(ctxReaberturas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Resolvidos (1ª vez)', 'Reabertos'],
+            datasets: [{
+                data: [chamadosNaoReabertos, chamadosReabertos],
+                backgroundColor: [coresGrafico[1], coresGrafico[3]], // Verde e Vermelho
+                borderColor: style.getPropertyValue('--surface-color'),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { color: corTexto } },
+                title: { display: true, text: 'Taxa de Reabertura', color: corTexto, font: { size: 16 } }
+            }
+        }
+    });
+
+    // 10. SUGESTÃO: Gráfico de Resolução no Mesmo Dia
+    let resolvidosNoDia = 0;
+    const chamadosResolvidos = chamados.filter(c => c.status === 'resolvido' && c.dataAbertura && c.resolucao?.data);
+
+    chamadosResolvidos.forEach(c => {
+        const dataAbertura = toJsDate(c.dataAbertura);
+        const dataResolucao = toJsDate(c.resolucao.data);
+
+        // Zera as horas para comparar apenas as datas
+        dataAbertura.setHours(0, 0, 0, 0);
+        dataResolucao.setHours(0, 0, 0, 0);
+
+        if (dataAbertura.getTime() === dataResolucao.getTime()) {
+            resolvidosNoDia++;
+        }
+    });
+
+    const resolvidosOutrosDias = chamadosResolvidos.length - resolvidosNoDia;
+
+    if (graficoResolucaoRapidaInstance) graficoResolucaoRapidaInstance.destroy();
+    graficoResolucaoRapidaInstance = new Chart(ctxResolucaoRapida, {
+        type: 'doughnut',
+        data: {
+            labels: ['Resolvidos no mesmo dia', 'Resolvidos em outros dias'],
+            datasets: [{
+                data: [resolvidosNoDia, resolvidosOutrosDias],
+                backgroundColor: [coresGrafico[0], coresGrafico[4]], // Azul e Roxo
+                borderColor: style.getPropertyValue('--surface-color'),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { color: corTexto } },
+                title: { display: true, text: 'Resolução no Mesmo Dia', color: corTexto, font: { size: 16 } }
+            }
+        }
+    });
 }
 
 function criarCardChamado(chamado) {
     const id = chamado.id;
     // CORREÇÃO: O timestamp do servidor pode ser nulo em um primeiro momento.
     // É preciso verificar sua existência antes de chamar toDate().
-    const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Processando...';
+    const dataAbertura = chamado.dataAbertura ? toJsDate(chamado.dataAbertura).toLocaleString('pt-BR') : 'Processando...';
     const status = (chamado.status || 'Pendente').trim().toLowerCase();
     const statusClass = status.replace(/\s+/g, '-');
     const displayStatus = (chamado.status || 'Pendente').charAt(0).toUpperCase() + (chamado.status || 'Pendente').slice(1);
@@ -482,7 +730,7 @@ function criarCardChamado(chamado) {
     const resolucaoHtml = status === 'resolvido' && chamado.resolucao?.descricao
         ? `<div class="resolucao-info">
              <strong>Solução:</strong> ${chamado.resolucao.descricao}
-             <span class="resolucao-data">Resolvido em: ${chamado.resolucao.data ? chamado.resolucao.data.toDate().toLocaleString('pt-BR') : 'Data não registrada'}</span>
+             <span class="resolucao-data">Resolvido em: ${chamado.resolucao.data ? toJsDate(chamado.resolucao.data).toLocaleString('pt-BR') : 'Data não registrada'}</span>
            </div>`
         : '';
 
@@ -515,7 +763,6 @@ function criarCardChamado(chamado) {
     card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
     card.dataset.id = id;
     card.dataset.status = status; // OTIMIZAÇÃO: Adiciona o status ao dataset para fácil acesso
-    // card.dataset.chamado = JSON.stringify(chamado); // MELHORIA: Removido para economizar memória
 
     card.innerHTML = `
         <div class="card-header">
@@ -683,7 +930,7 @@ function adicionarEventListeners() {
                 historico: arrayUnion({
                     descricao: 'Chamado reaberto pelo painel.',
                     timestamp: new Date(),
-                    usuario: auth.currentUser.email
+                    usuario: auth.currentUser.displayName || auth.currentUser.email // Usa o nome, ou o email como fallback
                 })
             }).then(() => {
                 console.log(`Chamado ${chamadoId} reaberto.`);
@@ -758,7 +1005,7 @@ function adicionarEventListeners() {
             novoHistorico.push({
                 descricao: `Status alterado para: ${novoStatus}`,
                 timestamp: new Date(),
-                usuario: auth.currentUser.email
+                usuario: auth.currentUser.displayName || auth.currentUser.email // Usa o nome, ou o email como fallback
             });
 
             let dadosParaAtualizar = {
