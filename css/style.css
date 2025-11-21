@@ -822,10 +822,12 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
 }
 
 .graficos-grid {
-    display: flex;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Cria uma grade 2x2 */
+    display: flex; /* Muda para flexbox para criar uma fileira */
+    overflow-x: auto; /* Permite rolagem horizontal se os gráficos não couberem */
     gap: 25px;
-    padding-bottom: 15px; /* Add some padding to not cut the shadow */
+    padding-bottom: 15px; /* Espaço para a barra de rolagem não cortar a sombra */
 }
 
 .grafico-wrapper {
@@ -833,7 +835,7 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
     padding: 20px;
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow);
-    min-width: 300px; /* Add a min-width to prevent squishing */
+    min-width: 300px; /* Largura mínima para cada gráfico não ficar espremido */
 }
 
 .kpi-grid {

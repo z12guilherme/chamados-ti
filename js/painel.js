@@ -16,6 +16,7 @@ let todosOsChamados = [];
 let graficoStatusInstance = null;
 let graficoSetoresInstance = null;
 let graficoUrgenciaInstance = null;
+let graficoMensalInstance = null; // NOVO: Instância para o gráfico mensal
 
 let ultimoDocumentoVisivel = null;
 const CHAMADOS_POR_PAGINA = 25;
@@ -253,6 +254,7 @@ function atualizarGraficos(chamados) {
     const ctxStatus = document.getElementById('graficoStatus').getContext('2d');
     const ctxSetores = document.getElementById('graficoSetores').getContext('2d');
     const ctxUrgencia = document.getElementById('graficoUrgencia').getContext('2d');
+    const ctxMensal = document.getElementById('graficoMensal').getContext('2d'); // NOVO: Contexto do novo gráfico
 
     // --- Lógica para os KPIs ---
     const totalChamados = chamados.length;
@@ -411,6 +413,54 @@ function atualizarGraficos(chamados) {
                 legend: { display: false },
                 title: { display: true, text: 'Chamados por Classificação' }
             }
+        }
+    });
+
+    // 4. NOVO: Gráfico de Chamados Abertos por Mês (últimos 6 meses)
+    const contagemMensal = {};
+    const meses = [];
+    const hoje = new Date();
+
+    // Gera as labels para os últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+        const mesAno = `${d.toLocaleString('pt-BR', { month: 'short' })}/${d.getFullYear().toString().slice(-2)}`;
+        meses.push(mesAno);
+        contagemMensal[mesAno] = 0;
+    }
+
+    chamados.forEach(chamado => {
+        if (chamado.dataAbertura) {
+            const data = toJsDate(chamado.dataAbertura);
+            const mesAno = `${data.toLocaleString('pt-BR', { month: 'short' })}/${data.getFullYear().toString().slice(-2)}`;
+            if (mesAno in contagemMensal) {
+                contagemMensal[mesAno]++;
+            }
+        }
+    });
+
+    if (graficoMensalInstance) graficoMensalInstance.destroy();
+    graficoMensalInstance = new Chart(ctxMensal, {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Chamados Abertos',
+                data: Object.values(contagemMensal),
+                backgroundColor: 'rgba(122, 162, 247, 0.2)',
+                borderColor: 'rgba(122, 162, 247, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Chamados Abertos por Mês', color: corTexto, font: { size: 16 } }
+            },
+            scales: { y: { beginAtZero: true, ticks: { color: corTexto }, grid: { color: corGrid } }, x: { ticks: { color: corTexto }, grid: { color: 'transparent' } } }
         }
     });
 }
