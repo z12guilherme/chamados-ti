@@ -16,6 +16,7 @@
     </div>
 
     <div class="container main-content">
+        <div class="loader" style="display: none;">Carregando chamados...</div>
         <div class="chamado-header">
             <h2>Painel de Chamados T.I</h2>
             <div class="header-actions">
@@ -50,28 +51,19 @@
             <button id="btnLimparFiltros" class="btn-limpar-filtros">Limpar Filtros</button>
         </div>
 
-        <div class="categorias-container">
-            <!-- Seção para chamados que precisam de atenção -->
-            <div class="categoria-section" id="chamados-ativos">
-                <h3>Chamados Ativos</h3>
-                <div id="listaPendentes">
-                    <p class="empty-state-message" style="display: none;">🎉 Nenhum chamado pendente no momento.</p>
-                </div>
-                <div id="listaEmAndamento">
-                    <p class="empty-state-message" style="display: none;">Nenhum chamado em andamento.</p>
-                </div>
-                <div id="listaAguardandoPeca">
-                    <p class="empty-state-message" style="display: none;">Nenhum chamado aguardando peças.</p>
-                </div>
+        <!-- NOVO LAYOUT: Duas Colunas -->
+        <div class="chamados-board">
+            <!-- Coluna para Chamados Ativos -->
+            <div class="chamados-column">
+                <h3 class="column-title"><i class="fas fa-hourglass-half"></i> Chamados Ativos</h3>
+                <div class="cards-container" id="lista-ativos"></div>
             </div>
-
-            <!-- Seção para chamados já resolvidos -->
-            <div class="categoria-section" id="chamados-resolvidos">
-                <h3>Histórico de Resolvidos</h3>
-                <div id="listaResolvidos"><p class="empty-state-message" style="display: none;">Ainda não há chamados resolvidos.</p></div>
-                <button id="btnCarregarMaisResolvidos" class="btn-load-more" style="display: none;">Carregar Mais</button>
+            <!-- Coluna para Chamados Resolvidos -->
+            <div class="chamados-column">
+                <h3 class="column-title"><i class="fas fa-check-circle"></i> Histórico de Resolvidos</h3>
+                <div class="cards-container" id="lista-resolvidos"></div>
+                <button id="btnCarregarMaisResolvidos" class="btn-carregar-mais" style="display: none; margin-top: 15px;">Carregar Mais</button>
             </div>
-            <div class="loader"></div> 
         </div>
     </div>
 
@@ -112,7 +104,7 @@
 
                 <div class="modal-actions">
                     <button type="button" id="btnStatusCancelar" class="btn-modal-cancel">Cancelar</button>
-                    <button type="submit" class="btn-resolver" style="border: 1px solid var(--primary-color); color: var(--primary-color);">Salvar</button>
+                <button type="submit" class="btn-resolver" style="border: 1px solid var(--primary-color);">Salvar</button>
                 </div>
             </form>
         </div>

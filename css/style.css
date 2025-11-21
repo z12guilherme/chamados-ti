@@ -119,7 +119,7 @@ body {
     max-width: 800px;
     background-color: var(--surface-color);
     padding: 40px;
-    margin: 40px 20px;
+    /* margin: 40px 20px; */
     margin: 40px auto;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
@@ -220,7 +220,7 @@ select {
     color: var(--text-primary);
     font-family: var(--font-family);
     background-color: var(--background-color);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 select {
@@ -231,6 +231,12 @@ select {
     background-position: right 1rem center;
     background-size: 1em;
 }
+
+/* CORREÇÃO: Garante que o select dentro do modal tenha o fundo correto */
+.modal-content select {
+    background-color: var(--surface-color);
+}
+
 
 input:focus, textarea:focus, select:focus {
     outline: none;
@@ -250,7 +256,6 @@ textarea {
 
 button {
     background-color: var(--primary-color);
-    color: white;
     padding: 14px 20px;
     width: 100%;
     border: 1px solid var(--primary-color);
@@ -259,6 +264,11 @@ button {
     font-size: 16px;
     font-weight: 600;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+/* CORREÇÃO: Aplica a cor branca apenas aos botões principais, não a todos */
+button:not([class*="btn-"]):not([class*="-tag"]) {
+    color: white;
 }
 
 button:hover {
@@ -296,7 +306,7 @@ button:disabled {
 .btn-resolver {
     background: none;
     border: 1px solid var(--success-color);
-    color: var(--success-color);
+    color: white;
     width: auto;
     padding: 8px 14px;
     font-size: 0.85rem;
@@ -319,6 +329,26 @@ button:disabled {
 .btn-aguardar:hover, .btn-modal-cancel:hover {
     background-color: var(--warning-color);
     color: var(--text-primary);
+}
+
+.btn-historico, .btn-status, .btn-reabrir {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    width: auto;
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-historico:hover, .btn-status:hover, .btn-reabrir:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
 }
 
 .btn-remover {
@@ -356,14 +386,20 @@ button:disabled {
 }
 
 .chamado-card {
-    border: none;
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--border-color);
     padding: 25px;
     margin-bottom: 20px;
     border-radius: var(--border-radius-lg);
     background-color: var(--surface-color);
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg); /* Sombra forte por padrão */
+    transform: translateY(-5px); /* Elevação por padrão */
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    border-left: 5px solid var(--border-color);
+}
+
+.chamado-card:hover {
+    transform: translateY(-8px); /* Aumenta a elevação */
+    /* A sombra já é forte, então não precisa de uma regra de hover separada para ela */
 }
 
 .chamado-card.pendente {
@@ -415,10 +451,6 @@ button:disabled {
     border-bottom: 1px solid var(--border-color);
 }
 
-.btn-status {
-    background: none;
-}
-
 .status-tag {
     padding: 4px 10px;
     border-radius: var(--border-radius-sm);
@@ -428,43 +460,50 @@ button:disabled {
     /* As cores de fundo e texto agora são definidas abaixo para cada tema */
     white-space: nowrap;
     align-self: flex-start;
+    background-color: transparent !important; /* Garante fundo transparente */
+    border: 1.5px solid; /* Define a borda, a cor será herdada do texto */
 }
 
 /* --- CORREÇÃO: Cores das Tags de Status (Tema Claro) --- */
-.status-tag {
-    color: #09090b; /* Garante texto escuro para alto contraste */
-    font-weight: 500;
+body:not(.dark-theme) .status-tag.pendente {
+    border-color: #b98900 !important;
+    color: #b98900 !important;
 }
-
-.status-tag.pendente {
-    background-color: #fef08a; /* Amarelo claro */
+body:not(.dark-theme) .status-tag.em-andamento {
+    border-color: #0d6efd !important;
+    color: #0d6efd !important;
 }
-
-.status-tag.em-andamento {
-    background-color: #93c5fd; /* Azul claro */
+body:not(.dark-theme) .status-tag.aguardando-peça {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
 }
-
-.status-tag.aguardando-peça {
-    background-color: #fed7aa; /* Laranja claro */
-}
-
-.status-tag.resolvido {
-    background-color: #a7f3d0; /* Verde claro */
+body:not(.dark-theme) .status-tag.resolvido {
+    border-color: #198754 !important;
+    color: #198754 !important;
 }
 
 /* --- CORREÇÃO: Cores das Tags de Status (Tema Escuro) --- */
 body.dark-theme .status-tag.pendente {
-    background-color: #fde047; /* Amarelo vibrante */
+    border-color: #e0af68 !important;
+    color: #e0af68 !important;
 }
 body.dark-theme .status-tag.em-andamento {
-    background-color: #60a5fa; /* Azul vibrante */
+    border-color: #7aa2f7 !important;
+    color: #7aa2f7 !important;
 }
 body.dark-theme .status-tag.aguardando-peça {
-    background-color: #f97316; /* Laranja vibrante */
+    border-color: #f7768e !important;
+    color: #f7768e !important;
 }
 body.dark-theme .status-tag.resolvido {
-    background-color: #4ade80; /* Verde vibrante */
+    border-color: #9ece6a !important;
+    color: #9ece6a !important;
 }
+body:not(.dark-theme) .status-tag.resolvido:hover {
+    background-color: #198754 !important;
+    color: white !important;
+}
+
 
 .empty-state {
     text-align: center;
@@ -492,6 +531,8 @@ body.dark-theme .status-tag.resolvido {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: rgba(0, 0, 0, 0.6); /* Fundo escurecido */
+    display: none; /* GARANTIA: Esconde o modal por padrão */
     z-index: 2000;
     animation: fadeIn 0.3s ease;
 }
@@ -534,6 +575,12 @@ body.dark-theme .status-tag.resolvido {
 .btn-modal-cancel:hover {
     background-color: var(--text-secondary);
     color: var(--surface-color);
+}
+
+/* CORREÇÃO: Garante que o botão de salvar no modal de status tenha o texto visível */
+.modal-actions button[type="submit"] {
+    background-color: var(--primary-color);
+    color: white; /* Mantém o texto branco quando o fundo é azul */
 }
 
 /* Novos estilos para os cards do painel */
@@ -602,6 +649,7 @@ body.dark-theme .status-tag.resolvido {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap; /* Permite que os botões quebrem a linha em telas menores */
     margin-top: 20px;
     padding-top: 15px;
     border-top: 1px solid var(--border-color);
@@ -612,8 +660,56 @@ body.dark-theme .status-tag.resolvido {
     color: #787c99;
 }
 
-.card-footer .btn-status, .card-footer .btn-remover {
-    padding: 6px 12px;
+/* NOVO: Container para os botões de ação do card */
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.card-actions .action-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    padding: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.card-actions .action-btn:hover {
+    background-color: var(--background-color);
+    color: var(--primary-color);
+    transform: none; /* Remove o efeito de hover do botão genérico */
+}
+
+.card-actions .btn-remover:hover {
+    color: var(--danger-color);
+}
+
+/* NOVO: Estilo para o botão de "Mais Opções" (kebab menu) */
+.more-options-btn {
+    position: relative;
+}
+
+.options-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 10;
+    list-style: none;
+    padding: 5px 0;
+    margin: 0 0 5px 0;
+    min-width: 160px;
 }
 
 /* Estilos para as tags de urgência */
@@ -675,25 +771,38 @@ body.dark-theme .status-tag.resolvido {
     opacity: 1;
 }
 
-/* Estilos para as novas categorias */
-.categoria-section {
-    margin-bottom: 40px;
+/* ============================================= */
+/* == NOVO: Estilos para o Layout de 2 Colunas == */
+/* ============================================= */
+.chamados-board {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Duas colunas de largura igual */
+    gap: 20px;
+    margin-top: 20px;
 }
 
-.categoria-section h3 {
+.chamados-column {
+    background-color: var(--background-color); /* CORREÇÃO: Usa a cor de fundo principal para contraste */
+    border-radius: var(--border-radius-lg);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+}
+
+.column-title {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--text-secondary);
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    padding-bottom: 15px;
+    margin: 0 0 15px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
-.empty-category-message {
-    color: var(--text-secondary);
-    text-align: center;
-    padding: 20px;
+.cards-container {
+    flex-grow: 1;
+    min-height: 200px; /* Altura mínima para a coluna não "colapsar" */
 }
-
 /* Estilos para o novo dashboard de gráficos */
 .dashboard-container {
     background-color: var(--background-color);
@@ -768,6 +877,11 @@ body.dark-theme .status-tag.resolvido {
     .form-header p {
         font-size: 1rem;
     }
+    /* NOVO: Ajuste responsivo para as colunas */
+    .chamados-board {
+        grid-template-columns: 1fr; /* Coluna única em telas pequenas */
+    }
+
     button {
         font-size: 1rem;
         padding: 12px 15px;
@@ -904,103 +1018,7 @@ body.dark-theme .status-tag.resolvido {
     text-decoration: underline;
 }
 
-/* ============================================= */
-/* == ESTILOS PARA O CARD DE CONSULTA (NOVO) == */
-/* ============================================= */
 
-.card-consulta {
-    background-color: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    margin-top: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    overflow: hidden; /* Garante que os cantos arredondados sejam aplicados */
-}
-
-.card-consulta-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    background-color: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.card-consulta-header .protocolo-info span,
-.card-consulta-header .status-info span {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.card-consulta-header .protocolo-info h3 {
-    margin: 0;
-    font-size: 1.75rem;
-    color: var(--primary-color);
-}
-
-.card-consulta-header .status-info {
-    text-align: right;
-}
-
-.card-consulta-header .status-tag {
-    margin: 0;
-    font-size: 1rem;
-}
-
-.card-consulta-body {
-    padding: 1.5rem;
-}
-
-.info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-}
-
-.info-item.info-full-width {
-    grid-column: 1 / -1; /* Faz o item ocupar a largura total */
-}
-
-.info-section {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.info-section h4 {
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
-.info-section p {
-    margin: 0;
-    background-color: var(--background-color);
-    padding: 1rem;
-    border-radius: var(--border-radius-md);
-    line-height: 1.6;
-}
-
-/* Ajuste para telas menores */
-@media (max-width: 600px) {
-    .info-grid {
-        grid-template-columns: 1fr; /* Coluna única em telas pequenas */
-        gap: 1rem;
-    }
-
-    .card-consulta-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .card-consulta-header .status-info {
-        text-align: left;
-    }
-}
 
 /* ============================================= */
 /* == ESTILOS PARA O CARD DE CONSULTA (NOVO) == */
@@ -1061,6 +1079,32 @@ body.dark-theme .status-tag.resolvido {
     background-color: var(--background-color);
     padding: 1rem;
     border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    transition: all .2s ease-in-out;
+    transform: none;
+    box-shadow: none;
+}
+
+/* TEMA ESCURO: Efeito de hover padrão (elevar) */
+body.dark-theme .info-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--primary-color);
+}
+
+/* TEMA CLARO: Inverte o efeito - elevado por padrão */
+body:not(.dark-theme) .info-item {
+    background-color: var(--surface-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+/* TEMA CLARO: Volta ao normal no hover */
+body:not(.dark-theme) .info-item:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-color);
 }
 
 .info-item.info-full-width {
@@ -1130,12 +1174,17 @@ body.dark-theme .status-tag.resolvido {
     position: absolute;
     top: 30px;
     right: 40px;
+    position: fixed; /* Fica fixo na tela mesmo com rolagem */
+    top: 20px;
+    right: 20px;
     z-index: 1000;
 }
 
 .theme-switcher-btn {
     width: 50px;
     height: 50px;
+    width: 45px; /* Levemente menor */
+    height: 45px;
     border-radius: 50%;
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
@@ -1145,7 +1194,9 @@ body.dark-theme .status-tag.resolvido {
     align-items: center;
     cursor: pointer;
     box-shadow: var(--shadow);
+    box-shadow: var(--shadow-lg); /* Sombra mais pronunciada */
     transition: all 0.3s ease;
+    overflow: hidden; /* Garante que os ícones não "escapem" durante a animação */
 }
 
 .theme-switcher-btn:hover {
@@ -1158,20 +1209,49 @@ body.dark-theme .status-tag.resolvido {
 .theme-switcher-btn .icon-moon {
     width: 24px;
     height: 24px;
+    position: absolute; /* Permite sobrepor os ícones para a animação */
+    width: 22px;
+    height: 22px;
+    transition: transform 0.4s ease, opacity 0.4s ease; /* Animação suave */
 }
 
 /* No tema claro (padrão), mostra a lua e esconde o sol */
 .theme-switcher-btn .icon-sun {
     display: none;
+    transform: translateY(100%) rotate(90deg); /* Começa fora e rotacionado */
+    transform: translateY(100%) rotate(90deg);
+    opacity: 0;
 }
 .theme-switcher-btn .icon-moon {
     display: block;
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+}
+
+/* CORREÇÃO: Deixa o ícone da lua preto no tema claro para contraste */
+body:not(.dark-theme) .theme-switcher-btn .icon-moon {
+    color: #212529; /* Cor preta (text-primary) */
 }
 
 /* No tema escuro, mostra o sol e esconde a lua */
 .dark-theme .theme-switcher-btn .icon-moon {
     display: none;
+    transform: translateY(-100%) rotate(-90deg); /* Sai para cima rotacionando */
+    transform: translateY(-100%) rotate(-90deg);
+    opacity: 0;
 }
 .dark-theme .theme-switcher-btn .icon-sun {
     display: block;
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+}
+
+.main-content {
+    max-width: 95%;
+    width: 1400px;
+}
+
+.filtros-container {
+    display: flex;
+    gap: 15px;
 }

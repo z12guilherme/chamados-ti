@@ -5,9 +5,8 @@ const { collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, getDo
 const { onAuthStateChanged, signOut } = authFunctions;
 
 // Declaração de variáveis globais que não dependem do DOM
-let btnLogout, btnExportarExcel, loader, listaPendentesEl, listaEmAndamentoEl, listaAguardandoPecaEl, listaResolvidosEl;
-let modalConfirmacao, btnModalCancelar, btnModalConfirmar, modalStatus, formStatus, selectStatus, btnStatusCancelar;
-let campoResolucao, textoResolucao, campoPeca, textoPeca, btnSalvarStatus, modalAnexo, imgAnexoViewer, closeViewerBtn;
+let btnLogout, btnExportarExcel, loader, btnModalConfirmar, modalStatus, formStatus, selectStatus, btnStatusCancelar, listaAtivosEl, listaResolvidosEl, modalConfirmacao, btnModalCancelar;
+let campoResolucao, textoResolucao, campoPeca, textoPeca, btnSalvarStatus, modalAnexo, imgAnexoViewer, closeViewerBtn, btnCarregarMaisResolvidos;
 let btnCarregarMais;
 
 let chamadoIdParaAcao = null;
@@ -23,23 +22,19 @@ const CHAMADOS_POR_PAGINA = 25;
 let carregandoMais = false;
 
 let isFirstLoad = true;
-let audio, originalTitle, intervalId = null;
+let originalTitle, intervalId = null;
 
 
 // SOLUÇÃO: Envolve toda a lógica que depende do DOM em um listener.
 document.addEventListener('DOMContentLoaded', () => {
-    inicializarPainel();
-});
-
-function inicializarPainel() {
+    // CORREÇÃO: Mover a inicialização para o topo do listener para garantir que as variáveis existam.
     // Inicialização de variáveis que dependem do DOM
     btnLogout = document.getElementById('btnLogout');
     btnExportarExcel = document.getElementById('btnExportarExcel');
     loader = document.querySelector('.loader');
-    listaPendentesEl = document.getElementById('listaPendentes');
-    listaEmAndamentoEl = document.getElementById('listaEmAndamento');
-    listaAguardandoPecaEl = document.getElementById('listaAguardandoPeca');
-    listaResolvidosEl = document.getElementById('listaResolvidos');
+    listaAtivosEl = document.getElementById('lista-ativos');
+    listaResolvidosEl = document.getElementById('lista-resolvidos'); // CORREÇÃO: Variável não inicializada
+    listaResolvidosEl = document.getElementById('lista-resolvidos');
     modalConfirmacao = document.getElementById('modalConfirmacao');
     btnModalCancelar = document.getElementById('btnModalCancelar');
     btnModalConfirmar = document.getElementById('btnModalConfirmar');
@@ -55,6 +50,7 @@ function inicializarPainel() {
     modalAnexo = document.getElementById('modalAnexo');
     imgAnexoViewer = document.getElementById('imgAnexoViewer');
     closeViewerBtn = document.querySelector('.close-viewer');
+    btnCarregarMaisResolvidos = document.getElementById('btnCarregarMaisResolvidos');
 
     // --- MELHORIA: Elementos para Paginação ---
     btnCarregarMais = document.createElement('button');
@@ -62,7 +58,9 @@ function inicializarPainel() {
     btnCarregarMais.className = 'btn-carregar-mais';
     btnCarregarMais.innerHTML = '<i class="fas fa-plus"></i> Carregar Mais Chamados';
     // Esta linha agora funcionará, pois '.main-content' já existe.
+    if (document.querySelector('.main-content')) {
     document.querySelector('.main-content').appendChild(btnCarregarMais);
+    }
 
     // --- MELHORIA: Notificações no Navegador ---
     if ('Notification' in window && Notification.permission !== 'granted') {
@@ -70,23 +68,25 @@ function inicializarPainel() {
     }
 
     // --- MELHORIA 2: Alerta Sonoro e Visual na Aba ---
-    audio = new Audio('assets/sounds/notification.mp3');
     originalTitle = document.title;
 
     // --- MELHORIA: Injetar Modal de Histórico ---
     criarModalHistorico();
+    adicionarEventListeners();
+    inicializarPainel(); // Garante que a lógica de autenticação e carregamento comece aqui.
+});
+
+function inicializarPainel() {
 
     // Proteção de Rota e Carregamento de Dados
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            // Agora, quando carregarChamados for chamado, 'loader' e outros elementos já existirão.
             carregarChamados();
         } else {
             window.location.href = 'login.html';
         }
     });
-
-    // Adiciona todos os outros event listeners que dependem de elementos do DOM
-    adicionarEventListeners();
 }
 
 /**
@@ -106,63 +106,68 @@ async function carregarChamados(carregarMais = false) {
     } else {
         loader.style.display = 'flex';
         // Limpa o array e as listas para a carga inicial
-        todosOsChamados = [];
-        listaPendentesEl.innerHTML = '<h4><i class="fas fa-hourglass-start"></i> Pendentes</h4>';
-        listaEmAndamentoEl.innerHTML = '<h4><i class="fas fa-tasks"></i> Em Andamento</h4>';
-        listaAguardandoPecaEl.innerHTML = '<h4><i class="fas fa-tools"></i> Aguardando Peça</h4>';
-        listaResolvidosEl.innerHTML = '<h4><i class="fas fa-check-circle"></i> Resolvidos</h4>';
-        q = query(chamadosRef, orderBy("dataAbertura", "desc"), limit(CHAMADOS_POR_PAGINA)); // CORREÇÃO DE SINTAXE
+        todosOsChamados = []; // Limpa o array de chamados
+        listaAtivosEl.innerHTML = '';
+        if(listaResolvidosEl) listaResolvidosEl.innerHTML = '';
+        q = query(chamadosRef, orderBy("dataAbertura", "desc"), limit(CHAMADOS_POR_PAGINA));
     }
 
-    try {
-        const querySnapshot = await getDocs(q);
-        ultimoDocumentoVisivel = querySnapshot.docs[querySnapshot.docs.length - 1];
+        try {
+            const querySnapshot = await getDocs(q);
+            ultimoDocumentoVisivel = querySnapshot.docs[querySnapshot.docs.length - 1];
 
-        querySnapshot.forEach((doc) => {
-            const chamado = { ...doc.data(), id: doc.id };
-            if (!todosOsChamados.some(c => c.id === chamado.id)) {
-                todosOsChamados.push(chamado);
-                const card = criarCardChamado(chamado);
-                adicionarCardNaLista(card, (chamado.status || 'Pendente').toLowerCase());
+            querySnapshot.forEach((doc) => {
+                const chamado = { ...doc.data(), id: doc.id };
+                if (!todosOsChamados.some(c => c.id === chamado.id)) {
+                    todosOsChamados.push(chamado);
+                    adicionarCardNaColunaCorreta(criarCardChamado(chamado), chamado.status);
+                }
+            });
+            // Mostra o botão "Carregar Mais"
+            btnCarregarMais.style.display = querySnapshot.docs.length < CHAMADOS_POR_PAGINA ? 'none' : 'block';
+
+            if (isFirstLoad) {
+                escutarTodasAsAlteracoes(); // Inicia o listener de tempo real APÓS a primeira carga
             }
-        });
-
-        // Esconde ou mostra o botão "Carregar Mais"
-        btnCarregarMais.style.display = querySnapshot.docs.length < CHAMADOS_POR_PAGINA ? 'none' : 'block';
-
-        if (isFirstLoad) {
-            escutarNovosChamados(); // Inicia o listener de tempo real APÓS a primeira carga
+        } catch (error) {
+            console.error("Erro ao carregar chamados:", error);
+        } finally {
+            loader.style.display = 'none';
+            btnCarregarMais.innerHTML = '<i class="fas fa-plus"></i> Carregar Mais Chamados';
+            carregandoMais = false;
+            if (isFirstLoad) {
+                isFirstLoad = false;
+                filtrarChamados(); // CORREÇÃO: Usa a função de filtro para a renderização inicial
+            }
         }
-
-    } catch (error) {
-        console.error("Erro ao carregar chamados:", error);
-    } finally {
-        loader.style.display = 'none';
-        btnCarregarMais.innerHTML = '<i class="fas fa-plus"></i> Carregar Mais Chamados';
-        carregandoMais = false;
-        isFirstLoad = false;
-        atualizarGraficos(todosOsChamados);
-        verificarEmptyStates();
-    }
 }
 
-function escutarNovosChamados() {
-    const qNovos = query(collection(db, "chamados"), where("dataAbertura", ">", new Date()));
+/**
+ * CORREÇÃO: A função agora escuta todas as alterações na coleção, não apenas os novos chamados.
+ * Isso garante que modificações e exclusões de chamados existentes sejam refletidas em tempo real.
+ */
+function escutarTodasAsAlteracoes() {
+    const q = query(collection(db, "chamados"));
 
-    onSnapshot(qNovos, (querySnapshot) => {
+    onSnapshot(q, (querySnapshot) => {
         querySnapshot.docChanges().forEach((change) => {
             const chamado = { ...change.doc.data(), id: change.doc.id };
             const status = (chamado.status || 'Pendente').trim().toLowerCase();
 
             if (change.type === "added") {
+                // Evita duplicar os chamados que já foram carregados na carga inicial
+                if (todosOsChamados.some(c => c.id === chamado.id)) {
+                    return;
+                }
+
                 // Adiciona ao array global apenas se não for o primeiro carregamento
                 todosOsChamados.unshift(chamado); // Adiciona no início
                 dispararNotificacao(chamado);
-                const card = criarCardChamado(chamado);
-                adicionarCardNaLista(card, status);
+                adicionarCardNaColunaCorreta(criarCardChamado(chamado), status, true); // Adiciona no topo
             }
 
             if (change.type === "modified") {
+                // console.log("Chamado modificado:", chamado.id);
                 const index = todosOsChamados.findIndex(c => c.id === chamado.id);
                 if (index > -1) {
                     todosOsChamados[index] = chamado;
@@ -170,19 +175,7 @@ function escutarNovosChamados() {
 
                 const cardExistente = document.querySelector(`.chamado-card[data-id="${chamado.id}"]`);
                 if (cardExistente) {
-                    const statusAntigo = cardExistente.dataset.status;
-
-                    // Otimização: Se o status mudou, movemos o card. Senão, apenas atualizamos o conteúdo.
-                    if (statusAntigo !== status) {
-                        // O status mudou, então o card precisa ser movido para outra lista.
-                        cardExistente.remove();
-                        const novoCard = criarCardChamado(chamado); // Recria o card para a nova lista
-                        adicionarCardNaLista(novoCard, status);
-                    } else {
-                        // O status é o mesmo, então apenas atualizamos o card existente.
-                        // Isso é muito mais performático do que recriar o elemento.
-                        atualizarCardExistente(cardExistente, chamado);
-                    }
+                    // Apenas atualiza o array, a renderização cuidará do resto
                 }
             }
 
@@ -195,29 +188,26 @@ function escutarNovosChamados() {
             }
         });
 
-        atualizarGraficos(todosOsChamados);
-        verificarEmptyStates();
+        // Após qualquer mudança, re-renderiza a lista de chamados e atualiza os gráficos
+        filtrarChamados();
     });
 }
 
+function adicionarCardNaColunaCorreta(card, status, adicionarNoTopo = false) {
+    const statusNormalizado = (status || 'pendente').toLowerCase();
+    let colunaDestino;
 
-function adicionarCardNaLista(card, status) {
-    let lista;
-    switch (status) {
-        case 'em-andamento':
-            lista = listaEmAndamentoEl;
-            break;
-        case 'aguardando-peça':
-            lista = listaAguardandoPecaEl;
-            break;
-        case 'resolvido':
-            lista = listaResolvidosEl;
-            break;
-        default:
-            lista = listaPendentesEl;
+    if (statusNormalizado === 'resolvido' && listaResolvidosEl) {
+        colunaDestino = listaResolvidosEl;
+    } else {
+        colunaDestino = listaAtivosEl;
     }
-    // Adiciona o novo card no topo da lista correspondente
-    lista.insertBefore(card, lista.children[1]); // Insere depois do título h4
+
+    if (adicionarNoTopo && colunaDestino.firstChild) {
+        colunaDestino.insertBefore(card, colunaDestino.firstChild);
+    } else {
+        colunaDestino.appendChild(card);
+    }
 }
 
 /**
@@ -228,24 +218,18 @@ function adicionarCardNaLista(card, status) {
 function atualizarCardExistente(cardElement, chamadoData) {
     const novoCardHTML = criarCardChamado(chamadoData).innerHTML;
     cardElement.innerHTML = novoCardHTML;
-    cardElement.dataset.chamado = JSON.stringify(chamadoData); // Atualiza os dados no dataset
+    // Atualiza classes importantes para estilo
+    const statusClass = (chamadoData.status || 'pendente').replace(/\s+/g, '-');
+    cardElement.className = `chamado-card ${statusClass}`;
 }
 
 /**
  * ADIÇÃO: Verifica se as listas de chamados estão vazias e exibe uma mensagem.
  */
 function verificarEmptyStates() {
-    const listas = [
-        listaPendentesEl,
-        listaEmAndamentoEl,
-        listaAguardandoPecaEl,
-        listaResolvidosEl
-    ];
-    listas.forEach(lista => {
-        const temCards = lista.querySelector('.chamado-card');
-        const mensagem = lista.querySelector('.empty-state-message');
-        if (mensagem) mensagem.style.display = temCards ? 'none' : 'block';
-    });
+    const board = document.querySelector('.chamados-board');
+    const temCards = board ? board.querySelector('.chamado-card') : null;
+    // Aqui você pode adicionar uma mensagem de "Nenhum chamado encontrado" se o container estiver vazio.
 }
 
 function dispararNotificacao(chamado) {
@@ -256,8 +240,7 @@ function dispararNotificacao(chamado) {
         });
     }
 
-    // Tocar som e piscar título
-    audio.play().catch(e => console.log("Não foi possível tocar o som."));
+    // Piscar título
     if (!intervalId) {
         intervalId = setInterval(() => {
             document.title = document.title === originalTitle ? '*** NOVO CHAMADO! ***' : originalTitle;
@@ -434,7 +417,9 @@ function atualizarGraficos(chamados) {
 
 function criarCardChamado(chamado) {
     const id = chamado.id;
-    const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Data indisponível';
+    // CORREÇÃO: O timestamp do servidor pode ser nulo em um primeiro momento.
+    // É preciso verificar sua existência antes de chamar toDate().
+    const dataAbertura = chamado.dataAbertura ? chamado.dataAbertura.toDate().toLocaleString('pt-BR') : 'Processando...';
     const status = (chamado.status || 'Pendente').trim().toLowerCase();
     const statusClass = status.replace(/\s+/g, '-');
     const displayStatus = (chamado.status || 'Pendente').charAt(0).toUpperCase() + (chamado.status || 'Pendente').slice(1);
@@ -503,8 +488,8 @@ function criarCardChamado(chamado) {
         <div class="card-footer">
             <div class="data-abertura">Aberto em: ${dataAbertura}</div>
             <button class="btn-historico" data-id="${id}" title="Ver histórico do chamado"><i class="fas fa-history"></i> Histórico</button>
-            <button class="btn-status" data-id="${id}" title="Alterar status do chamado"><i class="fas fa-edit"></i> Status</button>
-            ${status === 'resolvido' ? `<button class="btn-reabrir" data-id="${id}" title="Reabrir chamado"><i class="fas fa-undo"></i> Reabrir</button>` : ''}
+            <button class="btn-status" data-id="${id}" title="Alterar status do chamado"><i class="fas fa-edit"></i> Alterar Status</button>
+            ${status === 'resolvido' ? '<button class="btn-reabrir" data-id="' + id + '" title="Reabrir chamado"><i class="fas fa-undo"></i> Reabrir</button>' : ''}
             <button class="btn-remover" data-id="${id}" title="Remover chamado"><i class="fas fa-trash"></i> Remover</button>
         </div>
     `;
@@ -595,12 +580,14 @@ function adicionarEventListeners() {
     });
 
     // Delegação de eventos para os botões de ação nos cards
-    document.querySelector('.categorias-container').addEventListener('click', (e) => {
+    // Otimização: Adiciona um listener ao container pai das duas colunas
+    const board = document.querySelector('.chamados-board');
+    if (board) {
+        board.addEventListener('click', (e) => { 
         const target = e.target.closest('button, a'); // Garante que pegamos o botão ou link, mesmo clicando no ícone dentro dele
         if (!target) return;
-
-        if (target.classList.contains('anexo-link')) {
-            if (target.dataset.id && !target.getAttribute('href').startsWith('http')) {
+        
+        if (target.classList.contains('anexo-link') && !target.hasAttribute('target')) {
                 e.preventDefault();
                 const chamadoId = target.dataset.id;
                 const chamadoCompleto = todosOsChamados.find(c => c.id === chamadoId);
@@ -613,8 +600,6 @@ function adicionarEventListeners() {
                         window.open(chamadoCompleto.anexoBase64, '_blank');
                     }
                 }
-            }
-            return;
         }
 
         if (!target.dataset.id) return;
@@ -662,6 +647,7 @@ function adicionarEventListeners() {
             abrirModalHistorico(chamadoData);
         }
     });
+    };
 
     // Ações do Modal de Exclusão
     btnModalCancelar.addEventListener('click', () => {
@@ -672,14 +658,25 @@ function adicionarEventListeners() {
     btnModalConfirmar.addEventListener('click', async () => {
         if (chamadoIdParaAcao) {
             await deleteDoc(doc(db, "chamados", chamadoIdParaAcao));
+            
+            // MELHORIA: Remove o card da UI imediatamente para feedback visual rápido.
+            const cardParaRemover = document.querySelector(`.chamado-card[data-id="${chamadoIdParaAcao}"]`);
+            if (cardParaRemover) {
+                cardParaRemover.remove();
+            }
             modalConfirmacao.style.display = 'none';
             chamadoIdParaAcao = null;
         }
     });
 
-    // Fecha o modal ao clicar no 'X'
-    closeViewerBtn.onclick = function() {
-        modalAnexo.style.display = "none";
+    // --- MELHORIA: Event Listeners para Modais ---
+    if (closeViewerBtn) {
+        closeViewerBtn.onclick = () => { modalAnexo.style.display = "none"; };
+    }
+
+    // Evento para o novo botão "Carregar Mais" da coluna de resolvidos
+    if (btnCarregarMaisResolvidos) {
+        btnCarregarMaisResolvidos.addEventListener('click', mostrarTodosResolvidos);
     }
 
     // Ações do Modal de Status
@@ -753,35 +750,49 @@ function adicionarEventListeners() {
  * @param {Array} chamadosParaRenderizar - O array de chamados a serem exibidos.
  */
 function renderizarChamados(chamadosParaRenderizar) {
-    // 1. Limpa as listas atuais, mantendo os títulos
-    listaPendentesEl.innerHTML = '<h4><i class="fas fa-hourglass-start"></i> Pendentes</h4>';
-    listaEmAndamentoEl.innerHTML = '<h4><i class="fas fa-tasks"></i> Em Andamento</h4>';
-    listaAguardandoPecaEl.innerHTML = '<h4><i class="fas fa-tools"></i> Aguardando Peça</h4>';
-    listaResolvidosEl.innerHTML = '<h4><i class="fas fa-check-circle"></i> Resolvidos</h4>';
+    // 1. Limpa as colunas
+    if(listaAtivosEl) listaAtivosEl.innerHTML = '';
+    listaResolvidosEl.innerHTML = '';
 
-    // 2. Renderiza apenas os chamados filtrados
-    chamadosParaRenderizar.forEach(chamado => {
-        const card = criarCardChamado(chamado);
-        adicionarCardNaLista(card, (chamado.status || 'Pendente').toLowerCase());
+    // 2. Separa os chamados em ativos e resolvidos
+    const chamadosAtivos = chamadosParaRenderizar.filter(c => (c.status || 'pendente') !== 'resolvido');
+    const chamadosResolvidos = chamadosParaRenderizar.filter(c => (c.status || 'pendente') === 'resolvido');
+
+    // 3. Ordena os resolvidos pela data de resolução (mais recentes primeiro)
+    chamadosResolvidos.sort((a, b) => {
+        const dataA = a.resolucao?.data ? toJsDate(a.resolucao.data).getTime() : 0;
+        const dataB = b.resolucao?.data ? toJsDate(b.resolucao.data).getTime() : 0;
+        return dataB - dataA;
     });
 
-    // 3. Atualiza as mensagens de "lista vazia"
-    verificarEmptyStates();
+    // 4. Renderiza os chamados nas colunas corretas
+    chamadosAtivos.forEach(chamado => {
+        adicionarCardNaColunaCorreta(criarCardChamado(chamado), chamado.status);
+    });
+    chamadosResolvidos.forEach(chamado => {
+        adicionarCardNaColunaCorreta(criarCardChamado(chamado), chamado.status);
+    });
+
+    // Após renderizar, atualiza os gráficos e a visibilidade dos resolvidos
+    atualizarGraficos(chamadosParaRenderizar);
+    gerenciarVisibilidadeResolvidos(); // Atualiza a visibilidade após renderizar
 }
+
 
 function filtrarChamados() {
     const termo = document.getElementById('filtro').value.toLowerCase().trim();
     const statusFiltro = document.getElementById('filtroStatus').value;
     const urgenciaFiltro = document.getElementById('filtroUrgencia').value;
 
-    // MELHORIA: Filtra o array em memória em vez de manipular o DOM
     const chamadosFiltrados = todosOsChamados.filter(chamado => {
-        const textoParaBuscar = [
+        const textoParaBuscar = [ // CORREÇÃO: Lógica de busca estava incompleta
             chamado.protocolo || '',
             chamado.nome || '',
             chamado.setor || '',
-            chamado.problema || ''
+            chamado.problema || '',
+            chamado.resolucao?.descricao || ''
         ].join(' ').toLowerCase();
+
         const matchTexto = textoParaBuscar.includes(termo);
         const matchStatus = !statusFiltro || (chamado.status || '').toLowerCase() === statusFiltro.toLowerCase();
         const matchUrgencia = !urgenciaFiltro || (chamado.urgencia || '').toLowerCase() === urgenciaFiltro;
@@ -843,6 +854,15 @@ function toJsDate(dateObject) {
     return new Date(dateObject); // Tenta converter como string
 }
 
+// --- MELHORIA: Função para abrir o modal de anexo ---
+function abrirModalAnexo(base64Data) {
+    if (modalAnexo && imgAnexoViewer) {
+        imgAnexoViewer.src = base64Data;
+        modalAnexo.style.display = 'flex';
+    } else {
+        console.error("Modal de anexo ou visualizador de imagem não encontrado.");
+    }
+}
 
 // --- MELHORIA: Funções para o Modal de Histórico ---
 function criarModalHistorico() {
@@ -906,4 +926,34 @@ function abrirModalHistorico(chamado) {
     historicoHtml += '</ul>';
     conteudo.innerHTML = historicoHtml;
     modal.style.display = 'flex';
+}
+
+/**
+ * NOVO: Gerencia a visibilidade dos chamados resolvidos, mostrando apenas os 5 últimos.
+ */
+function gerenciarVisibilidadeResolvidos() {
+    if (!listaResolvidosEl) return;
+
+    const cardsResolvidos = listaResolvidosEl.querySelectorAll('.chamado-card');
+    
+    // Adiciona a classe para esconder os cards excedentes
+    cardsResolvidos.forEach((card, index) => {
+        if (index >= 5) {
+            card.classList.add('resolvido-oculto');
+        } else {
+            card.classList.remove('resolvido-oculto');
+        }
+    });
+
+    // Mostra ou esconde o botão "Carregar Mais"
+    if (cardsResolvidos.length > 5) {
+        btnCarregarMaisResolvidos.style.display = 'block';
+    } else {
+        btnCarregarMaisResolvidos.style.display = 'none';
+    }
+}
+
+function mostrarTodosResolvidos() {
+    listaResolvidosEl.querySelectorAll('.resolvido-oculto').forEach(card => card.classList.remove('resolvido-oculto'));
+    btnCarregarMaisResolvidos.style.display = 'none'; // Esconde o botão após o uso
 }
