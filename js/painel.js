@@ -6,7 +6,7 @@ const { onAuthStateChanged, signOut } = authFunctions;
 
 // Declaração de variáveis globais que não dependem do DOM
 let btnLogout, btnExportarExcel, loader, btnModalConfirmar, modalStatus, formStatus, selectStatus, btnStatusCancelar, listaAtivosEl, listaResolvidosEl, modalConfirmacao, btnModalCancelar;
-let campoResolucao, textoResolucao, campoPeca, textoPeca, btnSalvarStatus, modalAnexo, imgAnexoViewer, closeViewerBtn, btnCarregarMaisResolvidos;
+let campoResolucao, textoResolucao, campoPeca, textoPeca, campoDwService, textoDwService, btnSalvarStatus, modalAnexo, imgAnexoViewer, closeViewerBtn, btnCarregarMaisResolvidos;
 let btnCarregarMais;
 
 let chamadoIdParaAcao = null;
@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     textoResolucao = document.getElementById('textoResolucao');
     campoPeca = document.getElementById('campoPeca');
     textoPeca = document.getElementById('textoPeca');
+    campoDwService = document.getElementById('campoDwService');
+    textoDwService = document.getElementById('textoDwService');
     btnSalvarStatus = document.querySelector('#formStatus button[type="submit"]');
     modalAnexo = document.getElementById('modalAnexo');
     imgAnexoViewer = document.getElementById('imgAnexoViewer');
@@ -770,6 +772,13 @@ function criarCardChamado(chamado) {
         ? `<span class="urgency-tag ${urgenciaClass}">${chamado.urgencia}</span>`
         : '';
 
+    // MELHORIA: Lógica para exibir o ID do Agente DWService com botão de copiar
+    const dwServiceHtml = chamado.dwServiceAgentId
+        ? `<div class="dwservice-info" title="Clique para copiar o ID" data-agent-id="${chamado.dwServiceAgentId}">
+             <i class="fas fa-desktop"></i> ID: <span>${chamado.dwServiceAgentId}</span>
+           </div>`
+        : '';
+
     const card = document.createElement('div');
     card.className = `chamado-card ${statusClass.replace(/\s+/g, '-')}`;
     card.dataset.id = id;
@@ -795,6 +804,7 @@ function criarCardChamado(chamado) {
         ${resolucaoHtml}
         <div class="card-footer">
             <div class="data-abertura">Aberto em: ${dataAbertura}</div>
+            ${dwServiceHtml}
             <button class="btn-historico" data-id="${id}" title="Ver histórico do chamado"><i class="fas fa-history"></i> Histórico</button>
             <button class="btn-status" data-id="${id}" title="Alterar status do chamado"><i class="fas fa-edit"></i> Alterar Status</button>
             ${status === 'resolvido' ? '<button class="btn-reabrir" data-id="' + id + '" title="Reabrir chamado"><i class="fas fa-undo"></i> Reabrir</button>' : ''}
@@ -928,6 +938,8 @@ function adicionarEventListeners() {
             campoResolucao.style.display = statusNormalizado === 'resolvido' ? 'block' : 'none';
             textoPeca.value = chamadoAtualParaStatus.pecaAguardando || '';
             campoPeca.style.display = statusNormalizado === 'aguardando-peça' ? 'block' : 'none';
+            textoDwService.value = chamadoAtualParaStatus.dwServiceLink || '';
+            campoDwService.style.display = statusNormalizado === 'em-andamento' ? 'block' : 'none'; // Mostra o campo se o status for "Em Andamento"
             validarFormStatus();
             modalStatus.style.display = 'flex';
         }
@@ -953,6 +965,21 @@ function adicionarEventListeners() {
             // MELHORIA: Busca o chamado pelo ID em vez de usar o dataset
             const chamadoData = todosOsChamados.find(c => c.id === card.dataset.id);
             abrirModalHistorico(chamadoData);
+        }
+
+        // NOVO: Ação de copiar o ID do DWService
+        if (target.classList.contains('dwservice-info')) {
+            const agentId = target.dataset.agentId;
+            navigator.clipboard.writeText(agentId).then(() => {
+                const originalText = target.innerHTML;
+                target.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                setTimeout(() => {
+                    target.innerHTML = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Falha ao copiar o ID: ', err);
+                alert('Não foi possível copiar o ID.');
+            });
         }
     });
     };
@@ -991,6 +1018,7 @@ function adicionarEventListeners() {
     btnStatusCancelar.addEventListener('click', () => {
         modalStatus.style.display = 'none';
         campoResolucao.style.display = 'none';
+        campoDwService.style.display = 'none';
         campoPeca.style.display = 'none';
         chamadoIdParaAcao = null;
         chamadoAtualParaStatus = null;
@@ -1002,11 +1030,13 @@ function adicionarEventListeners() {
 
     textoResolucao.addEventListener('input', validarFormStatus);
     textoPeca.addEventListener('input', validarFormStatus);
+    textoDwService.addEventListener('input', validarFormStatus);
 
     formStatus.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (chamadoAtualParaStatus && chamadoAtualParaStatus.id) {
             const novoStatus = selectStatus.value;
+            const linkDw = textoDwService.value.trim();
             const chamadoId = chamadoAtualParaStatus.id;
             const chamadoRef = doc(db, "chamados", chamadoId);
 
@@ -1021,6 +1051,7 @@ function adicionarEventListeners() {
 
             let dadosParaAtualizar = {
                 status: novoStatus,
+                dwServiceLink: linkDw || null, // Salva o link ou null se estiver vazio
                 historico: novoHistorico,
                 ...(chamadoAtual.resolucao && { resolucao: null }),
                 ...(chamadoAtual.pecaAguardando && { pecaAguardando: null })
@@ -1128,12 +1159,15 @@ function validarFormStatus() {
     if (status === 'resolvido') {
         campoResolucao.style.display = 'block';
         campoPeca.style.display = 'none';
+        campoDwService.style.display = 'none';
     } else if (status === 'aguardando-peça') {
         campoResolucao.style.display = 'none';
         campoPeca.style.display = 'block';
+        campoDwService.style.display = 'none';
     } else {
         campoResolucao.style.display = 'none';
         campoPeca.style.display = 'none';
+        campoDwService.style.display = status === 'em-andamento' ? 'block' : 'none';
     }
 
     // Valida se o botão de salvar deve estar ativo
