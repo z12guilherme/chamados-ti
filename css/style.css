@@ -660,26 +660,6 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
     color: #787c99;
 }
 
-/* NOVO: Estilo para a tag de ID do DWService */
-.dwservice-info {
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 5px 10px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.dwservice-info:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
 /* NOVO: Container para os botões de ação do card */
 .card-actions {
     display: flex;
