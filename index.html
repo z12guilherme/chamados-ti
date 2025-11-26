@@ -89,7 +89,11 @@
 
                     <div class="form-group">
                         <label for="problema">Descreva o problema:</label>
-                        <textarea id="problema" name="problema" rows="5" required placeholder="Ex: Meu computador não liga e faz um barulho estranho."></textarea>
+                        <textarea id="problema" name="problema" rows="5" required placeholder="Seja o mais detalhado possível. Inclua mensagens de erro, o que você estava fazendo quando o problema ocorreu, etc." maxlength="2000"></textarea>
+                        <!-- NOVO: Contador de caracteres -->
+                        <div class="char-counter-wrapper">
+                            <span id="char-counter">0 / 2000</span>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -102,7 +106,7 @@
                         <label for="anexo" class="sub-label">Anexar arquivo diretamente:</label>
                         <div class="input-file-wrapper">
                             <label for="anexo" class="input-file-label" id="anexoLabel">Clique para selecionar um arquivo...</label>
-                            <input type="file" id="anexo" class="input-file" accept="image/*,application/pdf" style="display:none;">
+                            <input type="file" id="anexo" class="input-file" accept="image/*,application/pdf,.zip,.rar,.txt" style="display:none;">
                         </div>
 
                         <div class="anexo-separator">ou</div>

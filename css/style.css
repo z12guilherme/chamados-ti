@@ -18,6 +18,7 @@
     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
+    --border-radius-md: 8px;
     --border-radius-lg: 12px;
     --illustration-bg: linear-gradient(160deg, rgba(13, 110, 253, 0.05), rgba(13, 110, 253, 0));
 }
@@ -114,23 +115,140 @@ body {
     overflow-y: auto;
 }
 
+/* =================================================== */
+/* == NOVO: ESTILO DE TELA DIVIDIDA PARA PÁGINA DE LOGIN == */
+/* =================================================== */
+.login-split-screen {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.login-branding-side {
+    background-color: var(--background-color); /* Usa a cor de fundo do tema */
+    color: var(--text-secondary); /* Usa a cor de texto do tema */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+    text-align: center;
+    position: relative;
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(122, 162, 247, 0.1), transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(158, 206, 106, 0.08), transparent 40%),
+        radial-gradient(circle at 70% 80%, rgba(247, 118, 142, 0.08), transparent 40%);
+}
+
+.branding-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.branding-content h2 {
+    font-size: 2.5rem;
+    color: var(--text-primary); /* Texto primário do tema */
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.branding-content p {
+    font-size: 1.1rem;
+    max-width: 350px;
+    line-height: 1.6;
+}
+
+.branding-subtitle {
+    width: 100%; /* Garante que o parágrafo ocupe a mesma largura que o título */
+    text-align: right; /* Centraliza o texto explicitamente */
+    margin-top: -0.5rem; /* Ajusta o espaçamento com o título */
+}
+
+.branding-footer {
+    position: absolute;
+    bottom: 30px;
+    font-size: 0.85rem;
+    opacity: 0.5;
+}
+
+.login-form-side {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+    background-color: var(--surface-color);
+}
+
+.login-form-content {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Ajustes no cabeçalho do formulário de login */
+.login-form-side .form-header {
+    margin-bottom: 40px;
+}
+.login-form-side .form-header h1 {
+    font-size: 2.2rem;
+    color: var(--text-primary);
+    border: none;
+    padding: 0;
+}
+.login-form-side .form-header p {
+    font-size: 1rem;
+}
+
+/* Wrapper para label e link "esqueceu a senha" */
+.label-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.label-wrapper label {
+    margin-bottom: 0;
+}
+
+.form-link {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+.form-link:hover {
+    text-decoration: underline;
+}
+
 .container {
     width: 100%;
     max-width: 800px;
     background-color: var(--surface-color);
     padding: 40px;
     /* margin: 40px 20px; */
-    margin: 40px auto;
+    margin: 20px; /* Reduz a margem para telas menores */
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-lg);
     animation: fadeIn 0.5s ease-out;
 }
 
-/* NOVO: Wrapper para o formulário */
-.form-wrapper {
-    width: 100%;
-    max-width: 550px;
+/* NOVO: Estilo para o link 'Recuperar acesso' na página de login */
+.form-footer-links {
+    text-align: center;
+    margin-top: 20px;
 }
+
+.form-footer-links a {
+    color: var(--text-secondary); /* Usa a cor de texto secundária do tema */
+    text-decoration: none; /* Remove o sublinhado padrão */
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
 
 h1, h2 {
     color: var(--primary-color);
@@ -231,6 +349,12 @@ select {
     background-position: right 1rem center;
     background-size: 1em;
 }
+/* NOVO: Estilos para o ícone de mostrar/ocultar senha */
+.input-icon-clickable {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+}
 
 /* CORREÇÃO: Garante que o select dentro do modal tenha o fundo correto */
 .modal-content select {
@@ -264,17 +388,35 @@ button {
     font-size: 16px;
     font-weight: 600;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    position: relative;
+    overflow: hidden; /* Para o efeito de brilho */
+}
+
+/* NOVO: Efeito de brilho no botão */
+.btn-shine {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* CORREÇÃO: Aplica a cor branca apenas aos botões principais, não a todos */
-button:not([class*="btn-"]):not([class*="-tag"]) {
+button#btnLogin, button#btnSubmit, .btn-primary-modal {
     color: white;
 }
 
-button:hover {
-    background-color: transparent;
-    color: var(--primary-color);
+button:hover:not(:disabled) {
     transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+button#btnLogin:hover:not(:disabled) .btn-shine {
+    opacity: 1;
 }
 
 button.btn-secondary {
@@ -282,7 +424,7 @@ button.btn-secondary {
     color: var(--primary-color);
 }
 
-button:disabled {
+button:disabled, button.btn-secondary:disabled {
     background-color: #a0c7f1;
     cursor: not-allowed;
     transform: translateY(0);
@@ -349,6 +491,11 @@ button:disabled {
     color: white;
     transform: translateY(-1px);
     box-shadow: var(--shadow);
+}
+/* Efeito ao passar o mouse sobre o link de recuperar acesso */
+.form-footer-links a:hover {
+    color: var(--primary-color); /* Usa a cor primária do tema */
+    text-decoration: underline; /* Adiciona o sublinhado ao passar o mouse */
 }
 
 .btn-remover {
@@ -878,9 +1025,28 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
     .form-header p {
         font-size: 1rem;
     }
+    .login-container {
+        padding: 25px;
+        margin: 20px;
+    }
+
     /* NOVO: Ajuste responsivo para as colunas */
     .chamados-board {
         grid-template-columns: 1fr; /* Coluna única em telas pequenas */
+    }
+
+    /* NOVO: Ajuste responsivo para a tela de login */
+    .login-split-screen {
+        grid-template-columns: 1fr;
+    }
+    .login-branding-side {
+        display: none; /* Oculta a parte de branding em telas pequenas */
+    }
+    .login-form-side {
+        padding: 30px;
+    }
+    .login-form-content {
+        max-width: 100%;
     }
 
     button {
