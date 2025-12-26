@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Chamados</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <!-- Seletor de Tema -->
@@ -133,5 +134,15 @@
         <div id="captionViewer"></div>
     </div>
 
+    <script>
+        // Registro do Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('App pronto para instalar:', reg.scope))
+                    .catch(err => console.log('Erro ao registrar SW:', err));
+            });
+        }
+    </script>
 </body>
 </html>
