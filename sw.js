@@ -27,6 +27,9 @@ self.addEventListener('install', (event) => {
 
 // Estratégia: Network First (Tenta a internet, se cair usa o cache)
 self.addEventListener('fetch', (event) => {
+  // Ignora requisições que não sejam http ou https (como extensões do Chrome)
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
