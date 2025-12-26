@@ -30,6 +30,9 @@ self.addEventListener('fetch', (event) => {
   // Ignora requisições que não sejam http ou https (como extensões do Chrome)
   if (!event.request.url.startsWith('http')) return;
 
+  // Ignora requisições que não sejam GET (POST, PUT, DELETE não são suportados pelo Cache API)
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
