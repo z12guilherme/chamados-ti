@@ -1014,7 +1014,19 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
 }
 
 /* Responsive adjustments */
-@media (max-width: 600px) {
+@media (max-width: 992px) {
+    .page-wrapper {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .illustration-side {
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .form-side {
+        padding: 20px;
+    }
     .container {
         padding: 25px;
         margin: 20px 10px;
@@ -1066,6 +1078,30 @@ body:not(.dark-theme) .status-tag.resolvido:hover {
     }
     .modal-actions {
         flex-direction: column;
+    }
+    .theme-switcher {
+        top: 10px;
+        right: 10px;
+    }
+    .theme-switcher-btn {
+        width: 40px;
+        height: 40px;
+    }
+    .theme-switcher-btn .icon-sun,
+    .theme-switcher-btn .icon-moon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Ajustes extras para celulares pequenos */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px;
+        margin: 15px;
+    }
+    .form-header h1 {
+        font-size: 1.6rem;
     }
 }
 
