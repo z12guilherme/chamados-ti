@@ -37,8 +37,10 @@ self.addEventListener('fetch', (event) => {
     fetch(event.request)
       .then((response) => {
         // Atualiza o cache com a nova versão se a rede funcionar
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        if (response && response.status === 200) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+        }
         return response;
       })
       .catch(() => {
