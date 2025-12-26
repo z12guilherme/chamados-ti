@@ -18,11 +18,18 @@ const ASSETS_TO_CACHE = [
 
 // Instalação: Cache dos arquivos estáticos principais
 self.addEventListener('install', (event) => {
+  // Força o novo Service Worker a ativar imediatamente, substituindo o antigo
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+});
+
+// Ativação: Garante que o Service Worker controle a página imediatamente
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });
 
 // Estratégia: Network First (Tenta a internet, se cair usa o cache)
